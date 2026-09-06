@@ -112,7 +112,7 @@ class LinkTool(placement: Placement, index: Int) : Part(placement, index) {
                     p.strokeOval(x + 4, cy - 4, w - 8, 9.0, Style.OUTLINE, 4.2)
                     p.strokeOval(x + 4, cy - 4, w - 8, 9.0, Style.WOOD, 2.4)
                 }
-                val tail = Path().moveTo(x + w - 6, y + 18).quadTo(x + w - 2, y + 22, x + w - 8, y + 24)
+                val tail = Path().moveTo(x + w - 9, y + 20).quadTo(x + w - 6, y + 23, x + w - 12, y + 24)
                 p.strokePath(tail, Style.OUTLINE, 4.2); p.strokePath(tail, Style.WOOD, 2.4)
             }
             PartType.BELT -> {

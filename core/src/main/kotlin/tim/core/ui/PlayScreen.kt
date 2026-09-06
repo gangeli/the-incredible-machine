@@ -188,18 +188,36 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         listOf(flipButton, rotateButton, deleteButton, unlinkButton).forEach { it.visible = false; buttons.add(it) }
         // win overlay buttons
         val ww = 150 * u; val wh = 90 * u
-        nextButton = Button(AABB(game.width / 2 + 20 * u, game.height / 2 + 60 * u, game.width / 2 + 20 * u + ww, game.height / 2 + 60 * u + wh), Style.GREEN, Icons::next, "Next") { nextLevel() }
-        replayButton = Button(AABB(game.width / 2 - 20 * u - ww, game.height / 2 + 60 * u, game.width / 2 - 20 * u, game.height / 2 + 60 * u + wh), Style.BLUE, Icons::replay, "Again") { stopRun(); game.play("tap") }
-        nextButton.visible = false; replayButton.visible = false
+        val wy = winPanel().minY + 225 * u
+        nextButton = Button(AABB(game.width / 2 + 20 * u, wy, game.width / 2 + 20 * u + ww, wy + wh), Style.GREEN, Icons::next, "Next") { nextLevel() }
+        replayButton = Button(AABB(game.width / 2 - 20 * u - ww, wy, game.width / 2 - 20 * u, wy + wh), Style.BLUE, Icons::replay, "Again") { stopRun(); game.play("tap") }
         buttons.add(nextButton); buttons.add(replayButton)
         // clear-all confirmation buttons
         val cw = 190 * u; val ch = 96 * u
-        clearYesButton = Button(AABB(game.width / 2 + 16 * u, game.height / 2 + 30 * u, game.width / 2 + 16 * u + cw, game.height / 2 + 30 * u + ch), Style.RED, Icons::trash, "Yes, clear") { confirmClear = false; clearAll() }
-        clearNoButton = Button(AABB(game.width / 2 - 16 * u - cw, game.height / 2 + 30 * u, game.width / 2 - 16 * u, game.height / 2 + 30 * u + ch), Style.BLUE, Icons::close, "No, keep") { confirmClear = false; game.play("tap") }
-        clearYesButton.visible = false; clearNoButton.visible = false
+        val cy = clearPanel().minY + 196 * u
+        clearYesButton = Button(AABB(game.width / 2 + 16 * u, cy, game.width / 2 + 16 * u + cw, cy + ch), Style.RED, Icons::trash, "Yes, clear") { confirmClear = false; clearAll() }
+        clearNoButton = Button(AABB(game.width / 2 - 16 * u - cw, cy, game.width / 2 - 16 * u, cy + ch), Style.BLUE, Icons::close, "No, keep") { confirmClear = false; game.play("tap") }
         buttons.add(clearYesButton); buttons.add(clearNoButton)
+        // a relayout (screen resize) must not lose the current state of the overlays
+        nextButton.visible = won; replayButton.visible = won
+        clearYesButton.visible = confirmClear; clearNoButton.visible = confirmClear
+        syncPlayButtons()
         buildTabs()
         buildTiles()
+    }
+
+    /** The celebration panel. */
+    private fun winPanel(): AABB {
+        val u = game.u
+        val pw = 520 * u; val ph = 330 * u
+        return AABB(game.width / 2 - pw / 2, game.height / 2 - ph / 2 - 10 * u, game.width / 2 + pw / 2, game.height / 2 + ph / 2 - 10 * u)
+    }
+
+    /** The "sweep everything away?" panel. */
+    private fun clearPanel(): AABB {
+        val u = game.u
+        val pw = 560 * u; val ph = 310 * u
+        return AABB(game.width / 2 - pw / 2, game.height / 2 - ph / 2, game.width / 2 + pw / 2, game.height / 2 + ph / 2)
     }
 
     // ---------------------------------------------------------------- tray
@@ -417,7 +435,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         var best = -1; var bestD = Double.MAX_VALUE
         board.all.forEachIndexed { i, p ->
             if (!LinkRules.candidate(kind, p.type)) return@forEachIndexed
-            if (p.aabb.expanded(12.0).contains(w)) {
+            val slop = maxOf(12.0, (48.0 - minOf(p.w, p.h)) / 2)
+            if (p.aabb.expanded(slop).contains(w)) {
                 val d = (p.aabb.center - w).lengthSq
                 if (d < bestD) { bestD = d; best = i }
             }
@@ -609,6 +628,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         if (confirmClear) {
             pressedButton = listOf(clearYesButton, clearNoButton).firstOrNull { it.hit(x, y) }
             pressedButton?.pressed = true
+            // a tap anywhere outside the panel just closes it, keeping everything
+            if (pressedButton == null && !clearPanel().contains(Vec2(x, y))) { confirmClear = false; game.play("tap") }
             return
         }
         pressedButton = buttons.lastOrNull { it.hit(x, y) }
@@ -666,8 +687,12 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         if (trayDragStartY >= 0) {
             val dy = y - trayDragStartY
             val idx = trayPressIndex
-            // horizontal pull out of the tray starts a drag of a new part; vertical drag scrolls
-            if (!trayScrolling && idx >= 0 && remaining(tiles[idx].type) > 0 && (x < layout.tray.minX - 4 * game.u || abs(x - touchStart.x) > 30 * game.u)) {
+            // pulling a tile starts a drag; only a mostly vertical pull on a tray that can scroll scrolls it
+            val scrollable = trayContentHeight() > trayTilesArea().height + 1
+            val dx = x - touchStart.x
+            val pull = (Vec2(x, y) - touchStart).length > 10 * game.u
+            val wantsDrag = pull && (!scrollable || abs(dx) >= abs(dy) || x < layout.tray.minX)
+            if (!trayScrolling && idx >= 0 && remaining(tiles[idx].type) > 0 && wantsDrag) {
                 val t = tiles[idx].type
                 trayDragStartY = -1.0
                 trayPressIndex = -1
@@ -678,7 +703,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
                 game.play("pick")
                 return
             }
-            if (abs(dy) > 12 * game.u || trayScrolling) {
+            if (scrollable && (abs(dy) > 12 * game.u || trayScrolling)) {
                 trayScrolling = true
                 val maxScroll = maxOf(0.0, trayContentHeight() - trayTilesArea().height)
                 trayScroll = (trayDragStartScroll - dy).coerceIn(0.0, maxScroll)
@@ -781,6 +806,9 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     val linking: Boolean get() = linkMode != null
     val clearDialogShowing: Boolean get() = confirmClear
     fun clearDialogButtons(): Pair<AABB, AABB> = clearYesButton.rect to clearNoButton.rect
+    fun winButtons(): Pair<AABB, AABB> = replayButton.rect to nextButton.rect
+    fun topBarButtonRect(name: String): AABB = when (name) { "home" -> homeButton; "undo" -> undoButton; "clear" -> resetButton; else -> hintButton }.rect
+    val dragging: Boolean get() = drag != null
     /** Screen rectangle of a floating action button ("flip", "rotate", "delete", "unlink"), if visible. */
     fun actionButton(name: String): AABB? {
         drawSelectionButtons()
@@ -813,15 +841,6 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         if (won) drawWin(p)
         else if (failed) drawFail(p)
         if (confirmClear) drawClearDialog(p)
-        if (toastUntil > t) {
-            var size = 26 * u
-            val maxW = layout.field.width - 40 * u
-            while (size > 16 * u && p.textWidth(toast, size) + 50 * u > maxW) size -= 1 * u
-            val tw = p.textWidth(toast, size) + 50 * u
-            val cx = layout.field.center.x
-            p.panel(cx - tw / 2, layout.field.minY + 12 * u, tw, 54 * u, 16 * u, Style.CREAM)
-            p.textCentered(toast, cx, layout.field.minY + 39 * u, size, Style.OUTLINE)
-        }
     }
 
     private fun drawField(p: Painter, t: Double) {
@@ -971,12 +990,27 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         val right = tb.maxX - 14 * u
         val gw = right - left
         if (gw > 100 * u) {
-            p.fillRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, Style.CREAM)
+            // messages (what a tool can tie, "no room there") take over the banner so they never cover the field
+            val showingToast = toastUntil > t
+            p.fillRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, if (showingToast) Style.YELLOW else Style.CREAM)
             p.strokeRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, Style.OUTLINE, 2 * u)
-            val title = if (isFreeform) "Free play: build anything!" else level.goalText
+            val title = if (showingToast) toast else if (isFreeform) "Free play: build anything!" else level.goalText
+            val textLeft = if (isFreeform) left + 15 * u else left + 60 * u
+            val avail = right - 15 * u - textLeft
             var size = 28 * u
-            while (size > 14 * u && p.textWidth(title, size) > gw - 30 * u) size -= 2 * u
-            p.textCentered(title, left + gw / 2, tb.center.y, size, Style.OUTLINE)
+            while (size > 18 * u && p.textWidth(title, size) > avail) size -= 2 * u
+            val cut = title.indexOf(". ")
+            if (p.textWidth(title, size) > avail && cut > 0) {
+                // two short lines beat one unreadable one
+                val a = title.substring(0, cut + 1); val b = title.substring(cut + 2)
+                var s2 = 20 * u
+                while (s2 > 12 * u && maxOf(p.textWidth(a, s2), p.textWidth(b, s2)) > avail) s2 -= 1 * u
+                p.textCentered(a, textLeft + avail / 2, tb.center.y - s2 * 0.6, s2, Style.OUTLINE)
+                p.textCentered(b, textLeft + avail / 2, tb.center.y + s2 * 0.6, s2, Style.OUTLINE)
+            } else {
+                while (size > 12 * u && p.textWidth(title, size) > avail) size -= 1 * u
+                p.textCentered(title, textLeft + avail / 2, tb.center.y, size, Style.OUTLINE)
+            }
             if (!isFreeform) {
                 val badge = 46 * u
                 p.fillCircle(left + badge * 0.7, tb.center.y, badge * 0.45, Style.NAVY)
@@ -1061,12 +1095,12 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         p.alpha = 0.5
         p.fillRect(0.0, 0.0, game.width, game.height, Style.NAVY)
         p.alpha = 1.0
-        val pw = 560 * u; val ph = 270 * u
-        val px = game.width / 2 - pw / 2; val py = game.height / 2 - ph / 2 + 10 * u
-        p.panel(px, py, pw, ph, 28 * u, Style.CREAM, 4 * u)
-        p.save(); p.translate(game.width / 2 - 150 * u, py + 62 * u); p.scale(1.6 * u, 1.6 * u); Icons.broom(p, 0.0, 0.0, 48.0); p.restore()
-        p.textCentered("Sweep everything away?", game.width / 2 + 30 * u, py + 62 * u, 34 * u, Style.OUTLINE)
-        p.textCentered("All the parts you placed go back in the tray.", game.width / 2, py + 108 * u, 20 * u, Style.GREY_DARK)
+        val r = clearPanel()
+        p.panel(r.minX, r.minY, r.width, r.height, 28 * u, Style.CREAM, 4 * u)
+        // big broom on its own line, then the question and what it means
+        p.save(); p.translate(game.width / 2, r.minY + 58 * u); p.scale(1.7 * u, 1.7 * u); Icons.broom(p, 0.0, 0.0, 48.0); p.restore()
+        p.textCentered("Sweep everything away?", game.width / 2, r.minY + 128 * u, 34 * u, Style.OUTLINE)
+        p.textCentered("All the parts you placed go back in the tray.", game.width / 2, r.minY + 168 * u, 20 * u, Style.GREY_DARK)
         clearNoButton.visible = true; clearYesButton.visible = true
         clearNoButton.draw(p, u, game.clock)
         clearYesButton.draw(p, u, game.clock)
@@ -1079,8 +1113,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         p.fillRect(0.0, 0.0, game.width, game.height, Style.NAVY)
         p.alpha = 1.0
         confetti?.draw(p)
-        val pw = 520 * u; val ph = 300 * u
-        val px = game.width / 2 - pw / 2; val py = game.height / 2 - ph / 2 - 20 * u
+        val r = winPanel()
+        val px = r.minX; val py = r.minY; val pw = r.width; val ph = r.height
         val pop = 1.0 + 0.15 * (1 - a)
         p.save(); p.translate(game.width / 2, game.height / 2); p.scale(pop, pop); p.translate(-game.width / 2, -game.height / 2)
         p.panel(px, py, pw, ph, 28 * u, Style.CREAM, 4 * u)

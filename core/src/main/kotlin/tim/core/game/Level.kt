@@ -23,11 +23,16 @@ class Level(
     /** The part that best pictures the goal, shown on the level tile so non-readers know what to aim for. */
     val goalIcon: PartType? get() = iconFor(goal)
 
+    /** Part indices in goals count fixed parts first, then the solution's parts. */
+    private fun partType(index: Int): PartType? = fixed.getOrNull(index)?.type ?: solution.getOrNull(index - fixed.size)?.type
+
     private fun iconFor(g: Goal): PartType? = when (g) {
-        is Goal.BallInto -> fixed.getOrNull(g.container)?.type
-        is Goal.Activate -> fixed.getOrNull(g.part)?.type
+        is Goal.BallInto -> partType(g.container)
+        is Goal.Activate -> partType(g.part)
+        is Goal.Touch -> partType(g.target)
+        is Goal.TouchType -> partType(g.target)
         is Goal.ActivateAll -> g.type
-        is Goal.Reach -> fixed.getOrNull(g.part)?.type
+        is Goal.Reach -> partType(g.part)
         is Goal.Trapped -> PartType.CAGE
         Goal.PopAllBalloons -> PartType.BALLOON
         Goal.MouseEatsCheese -> PartType.CHEESE

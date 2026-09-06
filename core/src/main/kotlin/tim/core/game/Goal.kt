@@ -33,6 +33,25 @@ sealed class Goal {
         override val text get() = "Activate"
     }
 
+    /** A specific fixed part must touch (hit, pass through) the target part: the right ball on the star. */
+    data class Touch(val target: Int, val part: Int) : Goal() {
+        override fun check(m: Machine): Boolean {
+            val t = m.parts.getOrNull(target) as? Toucher ?: return false
+            val p = m.parts.getOrNull(part) ?: return false
+            return p in t.touchedBy
+        }
+        override val text get() = "Touch"
+    }
+
+    /** Some part of the given type (fixed, placed or spawned) must touch the target part. */
+    data class TouchType(val target: Int, val type: PartType) : Goal() {
+        override fun check(m: Machine): Boolean {
+            val t = m.parts.getOrNull(target) as? Toucher ?: return false
+            return t.touchedBy.any { it.type == type }
+        }
+        override val text get() = "Touch"
+    }
+
     /** All parts of a given type must be activated. */
     data class ActivateAll(val type: PartType) : Goal() {
         override fun check(m: Machine) = m.parts.filter { it.type == type }.let { ps -> ps.isNotEmpty() && ps.all { (it as? Activatable)?.activated == true } }
@@ -75,3 +94,6 @@ interface Container { val contents: List<Part> }
 
 /** Parts with a one-way "done" state (popped, rung, lit, launched, eaten, switched on). */
 interface Activatable { val activated: Boolean }
+
+/** Targets that remember which parts reached them (stars, bells, hoops). */
+interface Toucher { val touchedBy: Set<Part> }

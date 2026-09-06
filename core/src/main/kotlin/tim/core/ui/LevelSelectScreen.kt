@@ -73,7 +73,8 @@ class LevelSelectScreen(game: Game) : Screen(game) {
                 val icon = iconCache.getOrPut(gt) { tim.core.game.parts.PartFactory.create(tim.core.game.Placement(gt, 0.0, 0.0), 0) }
                 val sz = tileSize * 0.36
                 p.save(); p.translate(r.maxX - sz - 8 * u, r.minY + 8 * u + pr)
-                p.fillRoundRect(0.0, 0.0, sz, sz, sz * 0.25, Colors.withAlpha(Style.WHITE, 0.85))
+                // a soft shaded badge that works on white, yellow and green tiles alike
+                p.fillRoundRect(0.0, 0.0, sz, sz, sz * 0.25, Colors.withAlpha(Style.OUTLINE, if (stars > 0) 0.22 else 0.10))
                 icon.drawIcon(p, sz)
                 p.restore()
             }

@@ -88,3 +88,66 @@ class MainActivityTest {
         controller.pause().stop().destroy()
     }
 }
+
+/** Plays every puzzle's stored solution through the real Activity and Android Canvas painter, then taps Next. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class AllLevelsOnAndroidTest {
+    private val outDir = File(System.getProperty("tim.snapDir") ?: "build/snaps")
+
+    private fun render(view: View, name: String? = null): Bitmap {
+        val bmp = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        view.draw(Canvas(bmp))
+        if (name != null) { outDir.mkdirs(); FileOutputStream(File(outDir, "$name.png")).use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+        return bmp
+    }
+
+    private fun tap(view: View, x: Float, y: Float) {
+        val t = SystemClock.uptimeMillis()
+        view.dispatchTouchEvent(MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, x, y, 0))
+        view.dispatchTouchEvent(MotionEvent.obtain(t, t + 30, MotionEvent.ACTION_UP, x, y, 0))
+    }
+
+    @Test
+    fun everyLevelSolvesRendersAndAdvances() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java).setup()
+        val activity = controller.get()
+        val view = activity.findViewById<View>(android.R.id.content).let { (it as android.view.ViewGroup).getChildAt(0) } as GameView
+        view.measure(View.MeasureSpec.makeMeasureSpec(1280, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(800, View.MeasureSpec.EXACTLY))
+        view.layout(0, 0, 1280, 800)
+        val game = view.game
+        game.update(0.02)
+        val levels = tim.core.game.Levels.all
+        for ((i, level) in levels.withIndex()) {
+            game.startLevel(i); game.update(0.02)
+            val ps = game.screen as PlayScreen
+            ps.board.playerParts.addAll(level.solution)
+            ps.board.playerLinks.addAll(level.solutionLinks)
+            render(view)
+            val play = ps.playButtonRect()
+            tap(view, play.center.x.toFloat(), play.center.y.toFloat())
+            game.update(0.02)
+            assertTrue("${level.id}: machine should run", ps.running)
+            var t = 0.0
+            var frames = 0
+            while (!ps.won && t < level.timeLimit + 2) {
+                game.update(1.0 / 60); t += 1.0 / 60
+                if (++frames % 20 == 0) render(view)
+            }
+            assertTrue("${level.id}: not solved on Android", ps.won)
+            render(view, if (i == 15) "android-l16-won" else null)
+            val (_, next) = ps.winButtons()
+            tap(view, next.center.x.toFloat(), next.center.y.toFloat())
+            game.update(0.02)
+            if (i + 1 < levels.size) {
+                val s = game.screen
+                assertTrue("${level.id}: Next should open level ${i + 2}, got $s", s is PlayScreen && s.levelIndex == i + 1)
+                render(view, if (i == 15) "android-l17-start" else null)
+            } else {
+                assertTrue(game.screen is LevelSelectScreen)
+            }
+        }
+        controller.pause().stop().destroy()
+    }
+}

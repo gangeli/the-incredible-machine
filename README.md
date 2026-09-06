@@ -5,7 +5,7 @@ a free-play mode, designed so a six-year-old can play it on a tablet: big parts,
 one-sentence goals, a giant Play button, a tutorial nudge on the first puzzles, and a celebration
 when the machine works.
 
-* **Play:** 40 puzzles plus free play with every part. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
+* **Play:** 44 puzzles plus free play with every part. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
 * **Install:** see the [GitHub Pages site](https://gangeli.github.io/the-incredible-machine/) for the APK and step-by-step sideloading instructions. (The site lives in `docs/`; a copy of the signed APK is committed there too, so it also works with "Deploy from a branch: main, /docs". Pages has to be switched on once under *Settings -> Pages*; after that every push to `main` redeploys it.)
 * **Size:** the signed release APK is about 100 KB. All art is vector, all sounds are synthesised.
 

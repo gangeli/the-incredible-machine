@@ -26,6 +26,8 @@ object Fit {
         // parts with no solid body at all (pulleys, hooks) only take their bounding box
         if (solidsA.isEmpty() || solidsB.isEmpty()) return true
         for (x in solidsA) for (y in solidsB) {
+            // bodies that never collide in the simulation (a cage's frame and a creature, say) may share space
+            if ((x.category and y.mask) == 0 || (y.category and x.mask) == 0) continue
             x.updateCache(); y.updateCache()
             if (!x.aabb.overlaps(y.aabb)) continue
             val m = Collision.collide(x, y) ?: continue

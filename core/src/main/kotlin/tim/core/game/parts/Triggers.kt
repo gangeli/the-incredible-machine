@@ -7,6 +7,7 @@ import tim.core.game.Effect
 import tim.core.game.Part
 import tim.core.game.Placement
 import tim.core.game.Style
+import tim.core.game.Toucher
 import tim.core.physics.AABB
 import tim.core.physics.Body
 import tim.core.physics.BodyKind
@@ -44,10 +45,10 @@ class Switch(placement: Placement, index: Int) : Part(placement, index), Activat
         Draw.outlinedRoundRect(p, x, y + 14, w, h - 14, 3.0, Style.CREAM)
         p.fillRoundRect(x + 6, y + 20, w - 12, 12.0, 2.0, Style.GREY_LIGHT)
         p.strokeRoundRect(x + 6, y + 20, w - 12, 12.0, 2.0, Style.OUTLINE, 1.2)
-        // lever
+        // lever: stands up until something pushes it down
         val lx = cx; val ly = y + 26
-        val tipY = if (on) ly - 22 else ly - 10
-        val tipX = if (on) lx else lx - 6
+        val tipY = if (on) ly - 9 else ly - 22
+        val tipX = if (on) lx + 9 else lx + 2
         p.line(lx, ly, tipX, tipY, Style.OUTLINE, 6.0)
         p.line(lx, ly, tipX, tipY, if (on) Style.GREEN else Style.RED, 3.5)
         p.fillCircle(tipX, tipY, 4.0, if (on) Style.GREEN else Style.RED)
@@ -104,9 +105,10 @@ class Flashlight(placement: Placement, index: Int) : Part(placement, index), Act
 }
 
 /** Basketball hoop: counts balls that fall through the rim. */
-class Hoop(placement: Placement, index: Int) : Part(placement, index), Container {
+class Hoop(placement: Placement, index: Int) : Part(placement, index), Container, Toucher {
     private val scored = ArrayList<Part>()
     override val contents: List<Part> get() = scored
+    override val touchedBy: Set<Part> get() = scored.toSet()
     private var swish = 0.0
     lateinit var rimZone: Body
     override fun build(world: World) {
@@ -114,15 +116,17 @@ class Hoop(placement: Placement, index: Int) : Part(placement, index), Container
         val boardX = if (flipped) x + w - 6 else x
         val board = Body(PolygonShape.rect(boardX, y, boardX + 6, y + 30), Vec2.ZERO, BodyKind.STATIC, restitution = 0.5, friction = 0.3, owner = this, tag = "backboard")
         bodies.add(world.add(board))
-        val rimFarX = if (flipped) x + 2 else x + w - 8
-        val rimTip = Body(PolygonShape.rect(rimFarX, y + 20, rimFarX + 6, y + 24), Vec2.ZERO, BodyKind.STATIC, restitution = 0.4, friction = 0.3, owner = this, tag = "rim")
+        val rimFarX = if (flipped) x + 2 else x + w - 6
+        val rimTip = Body(PolygonShape.rect(rimFarX, y + 20, rimFarX + 4, y + 24), Vec2.ZERO, BodyKind.STATIC, restitution = 0.4, friction = 0.3, owner = this, tag = "rim")
         bodies.add(world.add(rimTip))
         rimZone = Body(PolygonShape.rect(x + 8, y + 24, x + w - 8, y + h), Vec2.ZERO, BodyKind.STATIC, owner = this, tag = "net")
         rimZone.isSensor = true
         bodies.add(world.add(rimZone))
     }
     override fun onSensor(self: Body, other: Body) {
+        // only a ball whose centre drops through the ring counts: clipping the net from the side is a miss
         if (self !== rimZone || !other.isDynamic || other.vel.y < 20) return
+        if (other.pos.x <= x + 8 || other.pos.x >= x + w - 8) return
         val part = machine.partOf(other) ?: return
         if (part in scored) return
         scored.add(part)
@@ -155,16 +159,17 @@ class Hoop(placement: Placement, index: Int) : Part(placement, index), Container
 }
 
 /** Bell: rings when something hits it. */
-class Bell(placement: Placement, index: Int) : Part(placement, index), Activatable {
+class Bell(placement: Placement, index: Int) : Part(placement, index), Activatable, Toucher {
     var rung = false
     override val activated get() = rung
+    override val touchedBy = LinkedHashSet<Part>()
     private var swing = 0.0
     override fun build(world: World) {
         val b = Body(PolygonShape(listOf(Vec2(x + 6, y + h - 8), Vec2(cx - 6, y + 6), Vec2(cx + 6, y + 6), Vec2(x + w - 6, y + h - 8), Vec2(x + w - 6, y + h - 2), Vec2(x + 6, y + h - 2))), Vec2.ZERO, BodyKind.STATIC, restitution = 0.4, friction = 0.3, owner = this, tag = "bell")
         bodies.add(world.add(b))
     }
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
-        if (other.isDynamic && ev.relativeSpeed > 30) ring()
+        if (other.isDynamic && ev.relativeSpeed > 30) { machine.partOf(other)?.let { touchedBy.add(it) }; ring() }
     }
     fun ring() {
         swing = 1.0
@@ -188,16 +193,19 @@ class Bell(placement: Placement, index: Int) : Part(placement, index), Activatab
 }
 
 /** Star: a target that lights up when anything touches it. */
-class Star(placement: Placement, index: Int) : Part(placement, index), Activatable {
+class Star(placement: Placement, index: Int) : Part(placement, index), Activatable, Toucher {
     var touched = false
     override val activated get() = touched
+    override val touchedBy = LinkedHashSet<Part>()
     override fun build(world: World) {
         val b = Body(PolygonShape.box(w / 2 - 2, h / 2 - 2), Vec2(cx, cy), BodyKind.STATIC, owner = this, tag = "star")
         b.isSensor = true
         bodies.add(world.add(b))
     }
     override fun onSensor(self: Body, other: Body) {
-        if (!other.isDynamic || touched) return
+        if (!other.isDynamic) return
+        machine.partOf(other)?.let { touchedBy.add(it) }
+        if (touched) return
         touched = true
         machine.effects.add(Effect(Effect.Kind.STARBURST, Vec2(cx, cy), 0.8, 1.4))
         machine.sounds.add("chime")

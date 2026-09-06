@@ -30,6 +30,8 @@ abstract class Creature(placement: Placement, index: Int, val mass: Double, val 
     lateinit var body: Body
     var facing = 1.0
     var walking = true
+    /** How much narrower than the picture the solid body is, so a cage of the same width fits over it. */
+    open val bodyInset: Double get() = 1.0
     var caught = false
     private var turnCooldown = 0
     val pos: Vec2 get() = if (built) body.pos else Vec2(cx, cy)
@@ -52,7 +54,7 @@ abstract class Creature(placement: Placement, index: Int, val mass: Double, val 
     override fun build(world: World) {
         facing = dir
         face = dir
-        body = Body(PolygonShape.box(w / 2 - 1, h / 2 - 1), Vec2(cx, cy), BodyKind.DYNAMIC, mass = mass, restitution = 0.0, friction = 0.8, owner = this, tag = type.name)
+        body = Body(PolygonShape.box(w / 2 - bodyInset, h / 2 - 1), Vec2(cx, cy), BodyKind.DYNAMIC, mass = mass, restitution = 0.0, friction = 0.8, owner = this, tag = type.name)
         body.category = Category.CREATURE
         bodies.add(world.add(body))
         nextBlink = 1.5 + noise(1) * 2.0
@@ -131,7 +133,10 @@ class Mouse(placement: Placement, index: Int) : Creature(placement, index, 0.1, 
     override fun think() {
         scared = false
         if (isCaged()) { walking = false; return }
-        val cheese = machine.parts.filterIsInstance<Cheese>().filter { !it.eaten && abs(it.center.x - pos.x) < 220 }.minByOrNull { abs(it.center.x - pos.x) }
+        // Mort spots cheese on his level in the direction he is facing (or right next to him)
+        val cheese = machine.parts.filterIsInstance<Cheese>()
+            .filter { !it.eaten && abs(it.center.y - pos.y) < 48 && ((it.center.x - pos.x) * facing > -20) }
+            .minByOrNull { abs(it.center.x - pos.x) }
         val cat = machine.parts.filterIsInstance<Cat>().firstOrNull { !it.caught && !it.isCaged() && abs(it.pos.x - pos.x) < 110 && abs(it.pos.y - pos.y) < 40 }
         if (cat != null) {
             facing = if (cat.pos.x > pos.x) -1.0 else 1.0
@@ -224,6 +229,7 @@ class Mouse(placement: Placement, index: Int) : Creature(placement, index, 0.1, 
  * see, jumps when something hits him, and lands with a bounce.
  */
 class Cat(placement: Placement, index: Int) : Creature(placement, index, 12.0, 55.0, 380.0, 22.0) {
+    override val bodyInset: Double get() = 5.0
     private var startled = 0.0
     private var scanTimer = 0
     private var groom = 0.0

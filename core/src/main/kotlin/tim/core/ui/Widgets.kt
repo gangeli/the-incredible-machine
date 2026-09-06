@@ -65,11 +65,24 @@ object Icons {
     }
     fun back(p: Painter, x: Double, y: Double, s: Double) = outlined(p, Path.polygon(-18.0, 0.0, 0.0, -16.0, 0.0, -7.0, 18.0, -7.0, 18.0, 7.0, 0.0, 7.0, 0.0, 16.0))
     fun next(p: Painter, x: Double, y: Double, s: Double) = outlined(p, Path.polygon(18.0, 0.0, 0.0, -16.0, 0.0, -7.0, -18.0, -7.0, -18.0, 7.0, 0.0, 7.0, 0.0, 16.0))
-    fun undo(p: Painter, x: Double, y: Double, s: Double) {
-        val arc = Path().arcTo(-12.0, -12.0, 30.0, 30.0, 200.0, 250.0)
-        p.strokePath(arc, Style.OUTLINE, 9.0); p.strokePath(arc, W, 5.0)
-        outlined(p, Path.polygon(-20.0, -6.0, -6.0, -16.0, -8.0, 2.0))
+    /**
+     * A curved arrow: an arc of radius [r] around ([cx],[cy]) from [startDeg] sweeping [sweepDeg]
+     * (clockwise when positive), with an arrowhead on the end pointing along the arc.
+     */
+    private fun curvedArrow(p: Painter, cx: Double, cy: Double, r: Double, startDeg: Double, sweepDeg: Double) {
+        val arc = Path().arcTo(cx - r, cy - r, 2 * r, 2 * r, startDeg, sweepDeg)
+        p.strokePath(arc, Style.OUTLINE, 9.5); p.strokePath(arc, W, 5.0)
+        val end = Math.toRadians(startDeg + sweepDeg)
+        val ex = cx + r * StrictMath.cos(end); val ey = cy + r * StrictMath.sin(end)
+        // tangent direction of travel at the end of the arc
+        val dir = if (sweepDeg >= 0) 1.0 else -1.0
+        val tx = -StrictMath.sin(end) * dir; val ty = StrictMath.cos(end) * dir
+        val nx = -ty; val ny = tx
+        val len = 12.0; val half = 9.0
+        val head = Path.polygon(ex + tx * len, ey + ty * len, ex - tx * 2 + nx * half, ey - ty * 2 + ny * half, ex - tx * 2 - nx * half, ey - ty * 2 - ny * half)
+        p.fillPath(head, W); p.strokePath(head, Style.OUTLINE, 2.5)
     }
+    fun undo(p: Painter, x: Double, y: Double, s: Double) = curvedArrow(p, 1.0, 5.0, 14.0, 10.0, -190.0)
     fun trash(p: Painter, x: Double, y: Double, s: Double) {
         outlined(p, Path.roundRect(-13.0, -10.0, 26.0, 28.0, 3.0))
         outlined(p, Path.roundRect(-17.0, -16.0, 34.0, 7.0, 2.0))
@@ -77,22 +90,31 @@ object Icons {
         for (lx in listOf(-6.0, 0.0, 6.0)) p.line(lx, -4.0, lx, 12.0, Style.OUTLINE, 2.0)
     }
     fun broom(p: Painter, x: Double, y: Double, s: Double) {
-        p.line(14.0, -22.0, -2.0, 2.0, Style.OUTLINE, 8.0); p.line(14.0, -22.0, -2.0, 2.0, Style.WOOD, 4.5)
-        outlined(p, Path.polygon(-2.0, 0.0, 8.0, 7.0, -4.0, 22.0, -18.0, 12.0), Style.YELLOW)
-        // bits being swept away
-        p.fillCircle(-22.0, -4.0, 3.0, W); p.strokeCircle(-22.0, -4.0, 3.0, Style.OUTLINE, 1.5)
-        p.fillRoundRect(-26.0, 6.0, 7.0, 5.0, 1.5, W); p.strokeRoundRect(-26.0, 6.0, 7.0, 5.0, 1.5, Style.OUTLINE, 1.5)
-        p.line(-16.0, -12.0, -22.0, -14.0, W, 2.0); p.line(-14.0, 16.0, -20.0, 20.0, W, 2.0)
+        p.save(); p.rotate(0.6)
+        // handle with a metal band where the straw is bound on
+        p.line(0.0, -26.0, 0.0, 6.0, Style.OUTLINE, 9.0); p.line(0.0, -26.0, 0.0, 6.0, Style.WOOD, 5.0)
+        p.line(1.0, -24.0, 1.0, 4.0, Colors.withAlpha(W, 0.35), 1.5)
+        // fanned straw bristles with a ragged bottom edge
+        val straw = Path.polygon(-5.0, 4.0, 5.0, 4.0, 13.0, 20.0, 10.0, 24.0, 6.0, 21.0, 2.0, 25.0, -2.0, 21.0, -6.0, 25.0, -10.0, 22.0, -13.0, 20.0)
+        p.fillPath(straw, Style.YELLOW); p.strokePath(straw, Style.OUTLINE, 2.5)
+        for (lx in listOf(-6.0, -2.0, 2.0, 6.0)) p.line(lx * 0.5, 8.0, lx * 1.6, 20.0, Colors.withAlpha(Style.OUTLINE, 0.55), 1.5)
+        p.fillRoundRect(-7.0, 2.0, 14.0, 6.0, 2.0, Style.GREY_LIGHT); p.strokeRoundRect(-7.0, 2.0, 14.0, 6.0, 2.0, Style.OUTLINE, 2.0)
+        p.restore()
+        // puffs of dust being swept away
+        p.fillCircle(-19.0, 14.0, 3.5, W); p.strokeCircle(-19.0, 14.0, 3.5, Style.OUTLINE, 1.5)
+        p.fillCircle(-24.0, 5.0, 2.5, W); p.strokeCircle(-24.0, 5.0, 2.5, Style.OUTLINE, 1.5)
+        p.line(-16.0, 22.0, -23.0, 24.0, W, 2.0)
     }
     fun scissors(p: Painter, x: Double, y: Double, s: Double) {
+        // two blades crossing at a pivot, points to the right, finger rings to the left
         for (side in listOf(1.0, -1.0)) {
-            p.save(); p.rotate(side * 0.35)
-            outlined(p, Path.polygon(0.0, -3.0 * side, 22.0, -1.0 * side, 22.0, 0.0, 0.0, 3.0 * side))
-            p.strokeOval(-20.0, side * 3.0 - 6.0, 14.0, 12.0, Style.OUTLINE, 5.0)
-            p.strokeOval(-20.0, side * 3.0 - 6.0, 14.0, 12.0, W, 2.5)
+            p.save(); p.translate(3.0, 0.0); p.rotate(side * 0.42)
+            outlined(p, Path.polygon(-2.0, -3.0, 20.0, -1.5, 24.0, 0.0, 20.0, 1.5, -2.0, 3.0))
+            p.strokeCircle(-14.0, 0.0, 6.5, Style.OUTLINE, 6.0)
+            p.strokeCircle(-14.0, 0.0, 6.5, W, 3.0)
             p.restore()
         }
-        p.fillCircle(0.0, 0.0, 3.0, Style.OUTLINE)
+        p.fillCircle(3.0, 0.0, 3.5, Style.OUTLINE); p.fillCircle(3.0, 0.0, 1.5, W)
     }
     fun bulb(p: Painter, x: Double, y: Double, s: Double) {
         p.fillCircle(0.0, -6.0, 15.0, Style.YELLOW); p.strokeCircle(0.0, -6.0, 15.0, Style.OUTLINE, 2.5)
@@ -105,11 +127,7 @@ object Icons {
         outlined(p, Path.polygon(4.0, -14.0, 22.0, 0.0, 4.0, 14.0))
         p.line(0.0, -20.0, 0.0, 20.0, Style.OUTLINE, 3.0)
     }
-    fun rotate(p: Painter, x: Double, y: Double, s: Double) {
-        val arc = Path().arcTo(-15.0, -15.0, 30.0, 30.0, -90.0, 270.0)
-        p.strokePath(arc, Style.OUTLINE, 9.0); p.strokePath(arc, W, 5.0)
-        outlined(p, Path.polygon(-8.0, -22.0, 8.0, -15.0, -8.0, -6.0))
-    }
+    fun rotate(p: Painter, x: Double, y: Double, s: Double) = curvedArrow(p, 0.0, 1.0, 15.0, 15.0, 255.0)
     fun close(p: Painter, x: Double, y: Double, s: Double) {
         p.line(-14.0, -14.0, 14.0, 14.0, Style.OUTLINE, 10.0); p.line(-14.0, 14.0, 14.0, -14.0, Style.OUTLINE, 10.0)
         p.line(-14.0, -14.0, 14.0, 14.0, W, 5.0); p.line(-14.0, 14.0, 14.0, -14.0, W, 5.0)
@@ -118,7 +136,7 @@ object Icons {
         val path = Path().moveTo(-18.0, 0.0).lineTo(-6.0, 12.0).lineTo(18.0, -12.0)
         p.strokePath(path, Style.OUTLINE, 11.0); p.strokePath(path, W, 6.0)
     }
-    fun replay(p: Painter, x: Double, y: Double, s: Double) = rotate(p, x, y, s)
+    fun replay(p: Painter, x: Double, y: Double, s: Double) = curvedArrow(p, 0.0, 1.0, 15.0, 165.0, -255.0)
     fun star(p: Painter, x: Double, y: Double, s: Double, fill: Int = Style.YELLOW) {
         val path = Path()
         for (i in 0 until 10) {
@@ -140,9 +158,25 @@ object Icons {
         }
     }
     fun wrench(p: Painter, x: Double, y: Double, s: Double) {
-        p.line(-12.0, 12.0, 8.0, -8.0, Style.OUTLINE, 11.0); p.line(-12.0, 12.0, 8.0, -8.0, W, 6.0)
-        p.fillCircle(11.0, -11.0, 10.0, W); p.strokeCircle(11.0, -11.0, 10.0, Style.OUTLINE, 2.5)
-        p.fillCircle(14.0, -14.0, 4.5, Style.OUTLINE)
+        p.save(); p.rotate(-0.78)
+        // handle
+        p.line(0.0, -2.0, 0.0, 22.0, Style.OUTLINE, 11.0); p.line(0.0, -2.0, 0.0, 22.0, W, 6.0)
+        // open-ended head: a disc with a notch cut out of the top
+        val head = Path()
+        val r = 11.0
+        val a0 = -90.0 + 35.0; val a1 = 270.0 - 35.0
+        var first = true
+        var a = a0
+        while (a <= a1) {
+            val px = StrictMath.cos(Math.toRadians(a)) * r; val py = -10.0 + StrictMath.sin(Math.toRadians(a)) * r
+            if (first) { head.moveTo(px, py); first = false } else head.lineTo(px, py)
+            a += 15.0
+        }
+        // the jaws: a slot cut down into the head from the opening in the arc
+        head.lineTo(-4.5, -9.0); head.lineTo(4.5, -9.0)
+        head.close()
+        p.fillPath(head, W); p.strokePath(head, Style.OUTLINE, 2.5)
+        p.restore()
     }
 }
 
