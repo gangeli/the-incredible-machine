@@ -20,6 +20,20 @@ class Level(
     val timeLimit: Double = 30.0,
     val hint: String = "",
 ) {
+    /** The part that best pictures the goal, shown on the level tile so non-readers know what to aim for. */
+    val goalIcon: PartType? get() = iconFor(goal)
+
+    private fun iconFor(g: Goal): PartType? = when (g) {
+        is Goal.BallInto -> fixed.getOrNull(g.container)?.type
+        is Goal.Activate -> fixed.getOrNull(g.part)?.type
+        is Goal.ActivateAll -> g.type
+        is Goal.Reach -> fixed.getOrNull(g.part)?.type
+        is Goal.Trapped -> PartType.CAGE
+        Goal.PopAllBalloons -> PartType.BALLOON
+        Goal.MouseEatsCheese -> PartType.CHEESE
+        is Goal.All -> g.goals.firstOrNull()?.let { iconFor(it) }
+    }
+
     fun newBoard() = Board(fixed, fixedLinks)
     fun solvedBoard() = Board(fixed, fixedLinks, ArrayList(solution), ArrayList(solutionLinks))
 }

@@ -25,6 +25,7 @@ class LevelSelectScreen(game: Game) : Screen(game) {
     private var tileSize = 0.0
     private var gap = 0.0
     private var gridTop = 0.0
+    private val iconCache = HashMap<tim.core.game.PartType, tim.core.game.Part>()
 
     override fun onEnter() {
         val u = game.u
@@ -66,7 +67,16 @@ class LevelSelectScreen(game: Game) : Screen(game) {
             p.fillRoundRect(r.minX, r.minY + 5 * u, r.width, r.height, 22 * u, Colors.withAlpha(Style.OUTLINE, 0.3))
             p.fillRoundRect(r.minX, r.minY + pr, r.width, r.height, 22 * u, fill)
             p.strokeRoundRect(r.minX, r.minY + pr, r.width, r.height, 22 * u, Style.OUTLINE, 3 * u)
-            p.textCentered("${t.index + 1}", r.center.x, r.center.y - (if (stars > 0) 12 * u else 0.0) + pr, tileSize * 0.42, if (stars > 0) Style.WHITE else Style.OUTLINE)
+            p.textCentered("${t.index + 1}", r.center.x - tileSize * 0.14, r.center.y - (if (stars > 0) 12 * u else 0.0) + pr, tileSize * 0.42, if (stars > 0) Style.WHITE else Style.OUTLINE)
+            // picture of the goal part in the corner
+            Levels.all[t.index].goalIcon?.let { gt ->
+                val icon = iconCache.getOrPut(gt) { tim.core.game.parts.PartFactory.create(tim.core.game.Placement(gt, 0.0, 0.0), 0) }
+                val sz = tileSize * 0.36
+                p.save(); p.translate(r.maxX - sz - 8 * u, r.minY + 8 * u + pr)
+                p.fillRoundRect(0.0, 0.0, sz, sz, sz * 0.25, Colors.withAlpha(Style.WHITE, 0.85))
+                icon.drawIcon(p, sz)
+                p.restore()
+            }
             if (stars > 0) {
                 for (i in 0 until 3) {
                     p.save(); p.translate(r.center.x + (i - 1) * tileSize * 0.26, r.maxY - tileSize * 0.22 + pr); p.scale(tileSize / 200.0, tileSize / 200.0)
