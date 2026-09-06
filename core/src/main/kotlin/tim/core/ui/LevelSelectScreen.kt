@@ -89,7 +89,10 @@ class LevelSelectScreen(game: Game) : Screen(game) {
         }
         // header
         p.fillRect(0.0, 0.0, game.width, 100 * u, Colors.withAlpha(Style.NAVY, 0.92))
-        p.bigText("Pick a puzzle", game.width / 2, 52 * u, 44 * u, Style.YELLOW)
+        // keep the title clear of the home button on tall, narrow screens
+        var ts = 44 * u
+        while (ts > 22 * u && p.textWidth("Pick a puzzle", ts) > game.width - 2 * 104 * u) ts -= 2 * u
+        p.bigText("Pick a puzzle", game.width / 2, 52 * u, ts, Style.YELLOW)
         homeButton.draw(p, u, game.clock)
     }
 
