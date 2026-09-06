@@ -20,6 +20,8 @@ class Manifold(
 }
 
 object Collision {
+    const val SEAM_TOLERANCE = 2.0
+
     fun collide(a: Body, b: Body): Manifold? {
         val sa = a.shape
         val sb = b.shape
@@ -100,6 +102,9 @@ object Collision {
         val vb = b.worldVerts
         var minOverlap = Double.MAX_VALUE
         var bestAxis = Vec2.ZERO
+        // smallest overlap along a (near) vertical axis, used to step over seams between tiles
+        var minVertical = Double.MAX_VALUE
+        var verticalAxis = Vec2.ZERO
         fun testAxes(verts: List<Vec2>): Boolean {
             val n = verts.size
             for (i in 0 until n) {
@@ -115,11 +120,18 @@ object Collision {
                     minOverlap = overlap
                     bestAxis = axis
                 }
+                if (kotlin.math.abs(axis.y) > 0.9 && overlap < minVertical) { minVertical = overlap; verticalAxis = axis }
             }
             return true
         }
         if (!testAxes(va)) return null
         if (!testAxes(vb)) return null
+        // A box sliding along a floor made of several tiles must not catch on the seams: when the
+        // separating axis is horizontal but the bodies barely overlap vertically, resolve vertically.
+        if (kotlin.math.abs(bestAxis.y) < 0.5 && minVertical < SEAM_TOLERANCE) {
+            bestAxis = verticalAxis
+            minOverlap = minVertical
+        }
         // orient axis from a to b
         val ca = a.pos + (a.shape as PolygonShape).centroid.rotated(a.angle)
         val cb = b.pos + (b.shape as PolygonShape).centroid.rotated(b.angle)

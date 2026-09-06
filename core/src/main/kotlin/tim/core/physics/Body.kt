@@ -7,6 +7,7 @@ object Category {
     const val SOLID = 1
     const val SENSOR = 2
     const val ROPE = 4
+    const val CREATURE = 8
     const val ALL = -1
 }
 
@@ -42,9 +43,28 @@ class Body(
      * instead of the full sliding coefficient. Conveyors override this with their own friction.
      */
     var rollingFriction: Double = 0.02
+    /** Surfaces that hold balls with full sliding friction (conveyors, seesaw planks). */
+    var gripsCircles: Boolean = false
     /** If true, other bodies never gain rest state on this body (moving platforms). */
     val mass: Double = if (kind == BodyKind.DYNAMIC) mass else 0.0
     val invMass: Double = if (kind == BodyKind.DYNAMIC && mass > 0) 1.0 / mass else 0.0
+    /** Kinematic bodies may follow another body rigidly (compound parts such as bucket walls). */
+    var follow: Body? = null
+    var followOffset: Vec2 = Vec2.ZERO
+    /** If true the offset rotates with the followed body's angle (end stops on a tilting plank). */
+    var followRotates: Boolean = false
+
+    internal fun syncFollow() {
+        val f = follow ?: return
+        if (followRotates) {
+            angle = f.angle
+            pos = f.pos + followOffset.rotated(f.angle)
+            vel = f.velocityAt(pos)
+        } else {
+            pos = f.pos + followOffset
+            vel = f.vel
+        }
+    }
     /** Set by the solver: true when the body touched something supporting it from below this step. */
     var grounded: Boolean = false
     var groundedOn: Body? = null

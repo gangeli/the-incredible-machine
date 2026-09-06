@@ -47,10 +47,15 @@ class World(
     val height: Double,
 ) {
     companion object {
-        const val DEFAULT_GRAVITY = 900.0
+        /**
+         * The original engine accelerates a bowling ball by 0.53 px per 30 Hz tick squared,
+         * i.e. about 480 px/s^2 on a playfield of similar size to ours.
+         */
+        const val DEFAULT_GRAVITY = 480.0
         const val STEP = 1.0 / 60.0
         const val SUBSTEPS = 4
-        const val MAX_SPEED = 2400.0
+        /** Terminal speed; the original clamps each axis at about 19 px per tick (570 px/s). */
+        const val MAX_SPEED = 720.0
         const val REST_SPEED = 6.0
         const val RESTITUTION_THRESHOLD = 40.0
         const val SLOP = 0.4
@@ -119,8 +124,8 @@ class World(
                 if (sp > MAX_SPEED) v = v * (MAX_SPEED / sp)
                 b.vel = v
             } else if (b.kind == BodyKind.KINEMATIC) {
-                b.pos = b.pos + b.vel * dt
-                b.angle += b.angVel * dt
+                if (b.follow != null) b.syncFollow()
+                else { b.pos = b.pos + b.vel * dt; b.angle += b.angVel * dt }
             }
             b.updateCache()
         }
@@ -133,7 +138,8 @@ class World(
             for (j in i + 1 until n) {
                 val b = bodies[j]
                 if (!b.enabled) continue
-                if (!a.isDynamic && !b.isDynamic) continue
+                if (!a.isDynamic && !b.isDynamic && !(a.isSensor || b.isSensor)) continue
+                if (!a.isDynamic && !b.isDynamic && a.kind == BodyKind.STATIC && b.kind == BodyKind.STATIC) continue
                 if (!a.canCollideWith(b)) continue
                 if (!a.aabb.overlaps(b.aabb)) continue
                 val m = Collision.collide(a, b) ?: continue
@@ -166,7 +172,11 @@ class World(
         // 5. positional correction
         for (m in manifolds) correctPosition(m)
         for (r in ropes) if (r.enabled) correctRope(r)
-        for (b in bodies) if (b.isDynamic) b.updateCache()
+        for (b in bodies) {
+            val f = b.follow
+            if (f != null) b.syncFollow()
+            if (b.isDynamic || f != null) b.updateCache()
+        }
         // 6. events
         for (m in manifolds) {
             val key = pairKey(m.a, m.b)
@@ -191,7 +201,7 @@ class World(
         val ca = a.shape is CircleShape
         val cb = b.shape is CircleShape
         if (!ca && !cb) return sqrt(a.friction * b.friction)
-        if (a.surfaceSpeed != 0.0 || b.surfaceSpeed != 0.0) return sqrt(a.friction * b.friction)
+        if (a.surfaceSpeed != 0.0 || b.surfaceSpeed != 0.0 || a.gripsCircles || b.gripsCircles) return sqrt(a.friction * b.friction)
         return when {
             ca && cb -> max(a.rollingFriction, b.rollingFriction)
             ca -> a.rollingFriction

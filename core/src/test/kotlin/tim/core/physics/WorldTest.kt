@@ -16,7 +16,7 @@ class WorldTest {
     fun `ball falls under gravity and comes to rest on the floor`() {
         val w = world()
         val b = ball(w, 400.0, 100.0)
-        run(w, 3.0)
+        run(w, 4.0)
         assertEquals(500.0 - 15.0, b.pos.y, 1.0, "ball should rest on the floor")
         assertTrue(b.vel.length < 1.0, "ball should be still, v=${b.vel}")
         assertTrue(b.grounded)
