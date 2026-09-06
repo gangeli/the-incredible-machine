@@ -60,7 +60,8 @@ private fun start() {
     }
     canvas.addEventListener("pointerdown", { e -> try { canvas.asDynamic().setPointerCapture(e.asDynamic().pointerId) } catch (t: Throwable) {}; send(TouchAction.DOWN, e) })
     canvas.addEventListener("pointermove", { e -> send(TouchAction.MOVE, e) })
-    canvas.addEventListener("pointerup", { e -> send(TouchAction.UP, e) })
+    // on touch screens only the release counts as a user gesture for audio, so unlock there too
+    canvas.addEventListener("pointerup", { e -> sound.unlock(); send(TouchAction.UP, e) })
     canvas.addEventListener("pointercancel", { e -> send(TouchAction.CANCEL, e) })
     canvas.addEventListener("contextmenu", { e -> e.preventDefault() })
     document.addEventListener("keydown", { e -> if (e.asDynamic().key == "Escape") { game.back(); e.preventDefault() } })
