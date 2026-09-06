@@ -52,7 +52,7 @@ object Synth {
         fun toPcm(): ShortArray {
             var peak = 1e-9
             for (v in data) if (kotlin.math.abs(v) > peak) peak = kotlin.math.abs(v)
-            val g = if (peak > 0.9) 0.9 / peak else 1.0
+            val g = 0.85 / peak // normalise every effect to the same loudness
             return ShortArray(n) { (data[it] * g * 32767).toInt().coerceIn(-32768, 32767).toShort() }
         }
     }

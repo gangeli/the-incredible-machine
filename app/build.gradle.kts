@@ -42,7 +42,7 @@ android {
 
     packaging {
         resources {
-            excludes += listOf("META-INF/*.version", "META-INF/*.kotlin_module", "kotlin/**", "META-INF/versions/**", "DebugProbesKt.bin", "**/*.kotlin_builtins")
+            excludes += listOf("META-INF/*.version", "META-INF/*.kotlin_module", "kotlin/**", "META-INF/versions/**", "DebugProbesKt.bin", "**/*.kotlin_builtins", "kotlin-tooling-metadata.json", "META-INF/version-control-info.textproto", "META-INF/com/android/build/gradle/app-metadata.properties")
         }
     }
 

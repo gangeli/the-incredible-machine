@@ -94,6 +94,9 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     private var lastSounds = ArrayList<String>()
     private var toast = ""
     private var toastUntil = 0.0
+    /** Seconds since the last touch; used to nudge a child who has not started. */
+    private var idleTime = 0.0
+    private var nudges = 0
 
     lateinit var layout: PlayLayout
     private val buttons = ArrayList<Button>()
@@ -325,6 +328,14 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         for (b in buttons) b.attention = 0.0
         if (m == null) {
             playButton.attention = if (board.playerParts.isNotEmpty() || isFreeform) 1.0 else 0.0
+            idleTime += dt
+            // Nobody has placed anything for a while: show where the first part goes (twice at most).
+            if (!isFreeform && board.playerParts.isEmpty() && drag == null && idleTime > 7.0 && nudges < 2 && hintUntil < game.clock) {
+                hintUntil = game.clock + 5.0
+                nudges++
+                idleTime = 0.0
+                game.play("hint")
+            }
             for (k in wobble.keys.toList()) { wobble[k] = wobble[k]!! * 0.88; if (wobble[k]!! < 0.02) wobble.remove(k) }
             return
         }
@@ -374,6 +385,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     private var pressedButton: Button? = null
 
     private fun onDown(x: Double, y: Double) {
+        idleTime = 0.0
         touchStart = Vec2(x, y); touchMoved = false
         pressedButton = buttons.lastOrNull { it.hit(x, y) }
         pressedButton?.let { it.pressed = true; return }
@@ -552,6 +564,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         syncPlayButtons()
         for (b in buttons) if (b !== nextButton && b !== replayButton) b.draw(p, u, t)
         drawDragGhost(p, t)
+        if (hintUntil > t && board.playerParts.isEmpty() && !running) drawNudgeArrow(p, t)
         if (won) drawWin(p)
         else if (failed) drawFail(p)
         if (toastUntil > t) {
@@ -711,6 +724,31 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             p.line(pl.x + pl.w + 4, pl.y - 4, pl.x - 4, pl.y + pl.h + 4, col, 3.0)
         }
         p.restore()
+    }
+
+    /** A big bouncing arrow from the tray tile of the first solution part to where it should go. */
+    private fun drawNudgeArrow(p: Painter, t: Double) {
+        val first = level.solution.firstOrNull() ?: return
+        val tile = tiles.firstOrNull { it.type == first.type } ?: return
+        val u = game.u
+        val from = Vec2(tile.rect.minX - 6 * u, tile.rect.center.y)
+        val to = layout.toScreen(Vec2(first.x + first.w / 2, first.y + first.h / 2))
+        val bounce = (StrictMath.sin(t * 5) * 0.5 + 0.5)
+        val dir = (to - from).normalized()
+        val end = to - dir * (40 * u + bounce * 14 * u)
+        val start = from - dir * (bounce * 6 * u)
+        val path = tim.core.render.Path()
+        path.moveTo(start.x, start.y)
+        path.quadTo((start.x + end.x) / 2, minOf(start.y, end.y) - 80 * u, end.x, end.y)
+        p.strokePath(path, Style.OUTLINE, 12 * u)
+        p.strokePath(path, Style.YELLOW, 7 * u)
+        // arrow head at the end, pointing along the curve
+        val tangent = (end - Vec2((start.x + end.x) / 2, minOf(start.y, end.y) - 80 * u)).normalized()
+        val n = tangent.perp()
+        val tip = end + tangent * (18 * u)
+        val head = tim.core.render.Path.polygon(tip.x, tip.y, end.x + n.x * 16 * u, end.y + n.y * 16 * u, end.x - n.x * 16 * u, end.y - n.y * 16 * u)
+        p.fillPath(head, Style.YELLOW)
+        p.strokePath(head, Style.OUTLINE, 3 * u)
     }
 
     private fun drawWin(p: Painter) {
