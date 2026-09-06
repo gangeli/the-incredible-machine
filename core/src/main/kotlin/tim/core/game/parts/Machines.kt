@@ -140,7 +140,7 @@ class Trampoline(placement: Placement, index: Int) : Part(placement, index) {
     override fun build(world: World) {
         mat = Body(PolygonShape.rect(x + 4, y + 4, x + w - 4, y + 12), Vec2.ZERO, BodyKind.STATIC, restitution = 0.4, friction = 0.4, owner = this, tag = "trampoline")
         bodies.add(world.add(mat))
-        val legs = Body(PolygonShape.rect(x + 8, y + 12, x + w - 8, y + h), Vec2.ZERO, BodyKind.STATIC, restitution = 0.0, friction = 0.4, owner = this, tag = "trampoline-legs")
+        val legs = Body(PolygonShape.rect(x + 8, y + 12, x + w - 8, y + h), Vec2.ZERO, BodyKind.STATIC, restitution = 0.2, friction = 0.4, owner = this, tag = "trampoline-legs")
         bodies.add(world.add(legs))
     }
 
@@ -317,10 +317,10 @@ class Bucket(placement: Placement, index: Int) : Part(placement, index), Contain
     val pos: Vec2 get() = if (built) Vec2(bottom.pos.x, bottom.pos.y - (h - 5)) else Vec2(cx, y)
 
     override fun build(world: World) {
-        bottom = Body(PolygonShape.box(w / 2 - 2, 5.0), Vec2(cx, y + h - 5), BodyKind.DYNAMIC, mass = 10.0, restitution = 0.1, friction = 0.6, owner = this, tag = "bucket")
+        bottom = Body(PolygonShape.box(w / 2 - 2, 5.0), Vec2(cx, y + h - 5), BodyKind.DYNAMIC, mass = 10.0, restitution = 0.125, friction = 0.6, owner = this, tag = "bucket")
         bodies.add(world.add(bottom))
         for (side in listOf(-1.0, 1.0)) {
-            val s = Body(PolygonShape.box(2.5, h / 2 - 2), Vec2(cx + side * (w / 2 - 3), cy), BodyKind.KINEMATIC, restitution = 0.1, friction = 0.4, owner = this, tag = "bucket-side")
+            val s = Body(PolygonShape.box(2.5, h / 2 - 2), Vec2(cx + side * (w / 2 - 3), cy), BodyKind.KINEMATIC, restitution = 0.125, friction = 0.4, owner = this, tag = "bucket-side")
             s.follow = bottom
             s.followOffset = s.pos - bottom.pos
             sides.add(s)
@@ -418,7 +418,7 @@ class Candle(placement: Placement, index: Int) : Part(placement, index), Activat
     override fun build(world: World) {
         body = Body(PolygonShape.box(w / 2, 12.0), Vec2(cx, y + 20), BodyKind.DYNAMIC, mass = 1.2, restitution = 0.1, friction = 0.7, owner = this, tag = "candle")
         bodies.add(world.add(body))
-        flame = Body(PolygonShape.box(9.0, 9.0), Vec2(cx, y + 2), BodyKind.KINEMATIC, owner = this, tag = "flame")
+        flame = Body(PolygonShape.box(12.0, 10.0), Vec2(cx, y + 2), BodyKind.KINEMATIC, owner = this, tag = "flame")
         flame.isSensor = true
         flame.follow = body
         flame.followOffset = Vec2(0.0, -18.0)

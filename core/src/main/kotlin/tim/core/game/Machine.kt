@@ -202,6 +202,9 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         for (e in effects) Effects.draw(p, e)
     }
 
+    /** Draws ropes and belts only (used by the editor preview, which draws parts itself). */
+    fun drawLinksOnly(p: Painter) { drawRopes(p); drawBelts(p) }
+
     private fun drawRopes(p: Painter) {
         for (r in ropes) {
             if (r.cut) continue

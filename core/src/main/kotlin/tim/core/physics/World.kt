@@ -152,7 +152,7 @@ class World(
                 }
                 val rv = relativeVelocity(m)
                 m.preVn = rv dot m.normal
-                var e = max(a.restitution, b.restitution) + max(a.bounceBoost, b.bounceBoost)
+                var e = min(a.restitution, b.restitution) + max(a.bounceBoost, b.bounceBoost)
                 if (-m.preVn < RESTITUTION_THRESHOLD) e = 0.0
                 m.restitution = min(e, 1.5)
                 m.friction = contactFriction(a, b)

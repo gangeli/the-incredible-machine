@@ -16,11 +16,17 @@ class Body(
     var pos: Vec2,
     val kind: BodyKind,
     mass: Double = 1.0,
-    var restitution: Double = 0.3,
+    restitution: Double = -1.0,
     var friction: Double = 0.4,
     val owner: Any? = null,
     val tag: String = "",
 ) {
+    /**
+     * Coefficient of restitution. A contact uses the smaller of the two bodies' values, as in the
+     * original engine, so walls default to 1.0 ("defer to the other object") and soft parts like
+     * buckets damp whatever lands in them.
+     */
+    var restitution: Double = if (restitution >= 0) restitution else if (kind == BodyKind.DYNAMIC) 0.3 else 1.0
     var vel: Vec2 = Vec2.ZERO
     /** Rotation of the shape about pos (used by kinematic planks and ramps; also visual spin of balls). */
     var angle: Double = 0.0

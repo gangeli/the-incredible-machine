@@ -18,7 +18,7 @@ import tim.core.render.Path
 class Wall(placement: Placement, index: Int) : Part(placement, index) {
     override fun build(world: World) {
         val friction = when (type) { PartType.WOOD_WALL -> 0.3; else -> 0.5 }
-        val b = Body(PolygonShape.rect(x, y, x + w, y + h), Vec2.ZERO, BodyKind.STATIC, restitution = 0.0, friction = friction, owner = this, tag = type.name)
+        val b = Body(PolygonShape.rect(x, y, x + w, y + h), Vec2.ZERO, BodyKind.STATIC, friction = friction, owner = this, tag = type.name)
         bodies.add(world.add(b))
     }
 
@@ -76,7 +76,7 @@ class Incline(placement: Placement, index: Int) : Part(placement, index) {
     }
 
     override fun build(world: World) {
-        val b = Body(PolygonShape(vertices()), Vec2.ZERO, BodyKind.STATIC, restitution = 0.0, friction = 0.35, owner = this, tag = type.name)
+        val b = Body(PolygonShape(vertices()), Vec2.ZERO, BodyKind.STATIC, friction = 0.35, owner = this, tag = type.name)
         bodies.add(world.add(b))
     }
 
