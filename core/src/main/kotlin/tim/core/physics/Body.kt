@@ -36,6 +36,12 @@ class Body(
     var force: Vec2 = Vec2.ZERO
     /** Extra restitution applied by this body to contacts (e.g. trampoline). Uses max with partner. */
     var bounceBoost: Double = 0.0
+    /**
+     * Friction used when this body is a circle rolling on a surface. Bodies do not simulate
+     * rotational inertia, so rolling is approximated by a small tangential friction (rolling resistance)
+     * instead of the full sliding coefficient. Conveyors override this with their own friction.
+     */
+    var rollingFriction: Double = 0.02
     /** If true, other bodies never gain rest state on this body (moving platforms). */
     val mass: Double = if (kind == BodyKind.DYNAMIC) mass else 0.0
     val invMass: Double = if (kind == BodyKind.DYNAMIC && mass > 0) 1.0 / mass else 0.0
@@ -56,6 +62,9 @@ class Body(
 
     /** Velocity of the body surface at world point p, including rotation and conveyor motion. */
     fun velocityAt(p: Vec2): Vec2 {
+        // Dynamic bodies do not rotate physically (their angle is a visual spin), so only
+        // kinematic bodies contribute rotational surface velocity.
+        if (kind != BodyKind.KINEMATIC) return vel
         val r = p - pos
         return vel + Vec2.cross(angVel, r)
     }
