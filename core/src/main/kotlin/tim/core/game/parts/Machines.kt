@@ -859,8 +859,8 @@ class Scissors(placement: Placement, index: Int) : Part(placement, index), Sharp
             // handle shaft and finger ring
             p.line(0.0, 0.0, -9.0, 2.5 * side, Style.OUTLINE, 3.5)
             p.line(0.0, 0.0, -9.0, 2.5 * side, Style.BLUE, 1.8)
-            p.strokeOval(-22.0, side * 3.0 - 5.0, 14.0, 10.0, Style.OUTLINE, 5.0)
-            p.strokeOval(-22.0, side * 3.0 - 5.0, 14.0, 10.0, Style.BLUE, 2.6)
+            p.strokeOval(-21.0, side * 7.0 - 4.5, 13.0, 9.0, Style.OUTLINE, 4.6)
+            p.strokeOval(-21.0, side * 7.0 - 4.5, 13.0, 9.0, Style.BLUE, 2.4)
             p.restore()
         }
         p.fillCircle(pivotX, pivotY, 2.8, Style.GREY_DARK)

@@ -212,22 +212,27 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         val tr = layout.tray
         tabs = if (!bigTray) emptyList() else {
             val cats = trayTypes().map { it.category }.distinct()
-            val gap = 4 * u
-            val tw = (tr.width - 12 * u - gap * (cats.size - 1)) / cats.size
-            val th = 46 * u
+            // up to four big tabs per row so each one is an easy target for small fingers
+            val perRow = minOf(4, cats.size)
+            val gap = 5 * u
+            val tw = (tr.width - 12 * u - gap * (perRow - 1)) / perRow
+            val th = 50 * u
             cats.mapIndexed { i, c ->
                 val rep = when (c) {
                     PartCategory.BALL -> PartType.BASKETBALL; PartCategory.STRUCTURE -> PartType.BRICK_WALL
                     PartCategory.MACHINE -> PartType.FAN; PartCategory.CREATURE -> PartType.CAT
                     PartCategory.TRIGGER -> PartType.SWITCH; PartCategory.GOAL -> PartType.STAR; PartCategory.LINK -> PartType.ROPE
                 }
-                TrayTab(c, AABB(tr.minX + 6 * u + i * (tw + gap), tr.minY + 8 * u, tr.minX + 6 * u + i * (tw + gap) + tw, tr.minY + 8 * u + th), icon(rep))
+                val col = i % perRow; val row = i / perRow
+                val x0 = tr.minX + 6 * u + col * (tw + gap)
+                val y0 = tr.minY + 8 * u + row * (th + gap)
+                TrayTab(c, AABB(x0, y0, x0 + tw, y0 + th), icon(rep))
             }
         }
         if (category == null && tabs.isNotEmpty()) category = tabs[0].category
     }
 
-    private fun tilesTop(): Double = if (tabs.isEmpty()) layout.tray.minY + 12 * game.u else tabs[0].rect.maxY + 10 * game.u
+    private fun tilesTop(): Double = if (tabs.isEmpty()) layout.tray.minY + 12 * game.u else tabs.maxOf { it.rect.maxY } + 10 * game.u
 
     private fun buildTiles() {
         val u = game.u
@@ -892,8 +897,9 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             p.fillRoundRect(r.minX, r.minY, r.width, r.height, 10 * u, if (on) Style.WHITE else Colors.rgb(0xB3C6DB))
             p.strokeRoundRect(r.minX, r.minY, r.width, r.height, 10 * u, if (on) Style.OUTLINE else Colors.withAlpha(Style.OUTLINE, 0.4), 2 * u)
             p.save()
+            p.clipRoundRect(r.minX, r.minY, r.width, r.height, 10 * u)
             if (!on) p.alpha = 0.55
-            val sz = r.height * 0.8
+            val sz = minOf(r.height, r.width) * 0.84
             p.translate(r.center.x - sz / 2, r.minY + (r.height - sz) / 2)
             tab.icon.drawIcon(p, sz)
             p.restore()
@@ -911,6 +917,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             p.fillRoundRect(r.minX, r.minY, r.width, r.height, 14 * u, if (active) Style.YELLOW else if (enabled) Style.WHITE else Colors.rgb(0xE6ECF2))
             p.strokeRoundRect(r.minX, r.minY, r.width, r.height, 14 * u, Style.OUTLINE, 2 * u)
             p.save()
+            p.clipRoundRect(r.minX, r.minY, r.width, r.height, 14 * u)
             if (!enabled) p.alpha = 0.35
             val iconSize = minOf(r.height * 0.86, r.width * 0.86)
             p.translate(r.minX + (r.width - iconSize) / 2 - (if (isFreeform) 0.0 else 8 * u), r.minY + (r.height - iconSize) / 2)

@@ -10,8 +10,9 @@ How the game was tested without a device (this project was built in a container 
   solutions only use parts from the tray, sit on the 4-unit placement grid and do not overlap.
 * **Touch-driven playthrough** (`PlaytestTest`): for every level the test presses the tray tile,
   drags it across the tray edge onto the field with the same lift-above-finger offset a child
-  experiences, uses the floating flip/rotate buttons where the solution needs them, presses the big
-  Play button and waits for the "You did it!" screen. Screenshots of every solved level are in
+  experiences, uses the floating flip/rotate buttons where the solution needs them, ties any ropes,
+  belts or wires by tapping the tool and then the parts (pulleys included), presses the big Play
+  button and waits for the "You did it!" screen. Screenshots of every solved level are in
   `docs/screenshots/all-levels-solved.png`.
 * **Monkey test** (`FuzzTest`): thousands of random taps, drags, cancelled touches, Play presses
   mid-drag and back presses, at four screen sizes including free play. Invariants checked after
@@ -37,6 +38,11 @@ How the game was tested without a device (this project was built in a container 
 * Failure is gentle: "Hmm, not yet! Let's try again" and the board is kept exactly as built.
 * Success is loud: confetti, a fanfare, stars, and a Next button.
 * No text entry, no menus deeper than one level, back button always does the obvious thing.
+* Ropes, belts and wires are tied with taps, not drags (dragging moves parts): tap the tool, tap
+  the first thing, tap the second. Everything the tool can touch pulses yellow, the chosen end turns
+  green, and a dashed line follows the finger. A finished link can be tapped and cut again.
+* The broom asks "Sweep everything away?" with big Yes/No buttons before clearing the board.
+* Big trays (free play) get category tabs and two columns so a part is at most two taps away.
 
 ## Things found and fixed during playtesting
 

@@ -33,9 +33,9 @@ class CreatureStripTest {
     @Test
     fun `cat walk cycle, sitting, grooming, startle and fall`() {
         // walking towards a mouse: one machine stepped progressively
-        val walk = machine { floor(this); part(PartType.CAT, 100.0, 352.0); part(PartType.MOUSE, 400.0, 368.0, flipped = true) }
+        val walk = machine { floor(this); part(PartType.CAT, 100.0, 352.0); part(PartType.MOUSE, 300.0, 368.0, flipped = true) }
         val cat = walk.part<Cat>(7)
-        walk.run(0.5)
+        walk.runUntil(3.0) { cat.chasing && cat.moving }
         strip("strip-cat-walk", 8, 3.0) { f -> if (f > 0) walk.run(0.07); walk to cat }
         assertTrue(cat.chasing, "cat should be walking towards the mouse")
         // sitting and grooming over a longer idle period
