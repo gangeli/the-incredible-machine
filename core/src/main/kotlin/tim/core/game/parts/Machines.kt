@@ -326,7 +326,7 @@ class Fan(placement: Placement, index: Int) : Part(placement, index) {
         p.fillCircle(ccx, ccy, 2.5, Style.OUTLINE)
         p.strokeCircle(ccx, ccy, r, Style.OUTLINE, Style.LINE)
         // wind lines when running
-        if (!built || running) {
+        if (built && running) {
             p.alpha = 0.5
             for (i in 0 until 3) {
                 val wy = ccy - 8 + i * 8
