@@ -379,7 +379,38 @@ object LevelData {
             hint = "Basketball on the low end, bowling ball high above the other end."
             timeLimit = 20.0
         },
+        level("l35", "Free Mort", "Get Mort to the cheese") {
+            floor()
+            val p1 = fixed(T.PULLEY, 176.0, 24.0)
+            val p2 = fixed(T.PULLEY, 432.0, 24.0)
+            val cage = fixed(T.CAGE, 160.0, 328.0)
+            fixed(T.MOUSE, 176.0, 368.0, flipped = true)
+            val bucket = fixed(T.BUCKET, 416.0, 200.0)
+            rope(cage, bucket, p1, p2)
+            fixed(T.CHEESE, 40.0, 368.0)
+            tray(T.BOWLING_BALL, 1)
+            solve(T.BOWLING_BALL, 424.0, 56.0)
+            goal = Goal.MouseEatsCheese
+            hint = "Something heavy in the bucket will pull the cage up."
+            timeLimit = 25.0
+        },
+        level("l36", "Power up", "Get the ball to the star") {
+            floor()
+            val sw = fixed(T.SWITCH, 120.0, 344.0)
+            val motor = fixed(T.MOTOR, 200.0, 344.0)
+            wire(sw, motor)
+            val belt = fixed(T.CONVEYOR, 280.0, 360.0)
+            belt(motor, belt)
+            fixed(T.BOWLING_BALL, 296.0, 328.0)
+            val star = fixed(T.STAR, 520.0, 352.0)
+            tray(T.BASEBALL, 1)
+            solve(T.BASEBALL, 128.0, 120.0)
+            goal = Goal.Activate(star)
+            hint = "The switch powers the motor, the motor drives the belt."
+        },
     )
 
     val demo: Level = levels[11]
+    /** Solutions worth watching on the title screen. */
+    val demos: List<Level> = listOf("l12", "l18", "l28", "l34", "l25", "l14").map { id -> levels.first { it.id == id } }
 }

@@ -38,9 +38,12 @@ class TitleScreen(game: Game) : Screen(game) {
         restartDemo()
     }
 
+    private var demoIndex = 0
     private fun restartDemo() {
-        val lvl = Levels.demo()
-        demo = Machine(lvl.solvedBoard())
+        val list = Levels.demos()
+        val lvl = list[demoIndex % list.size]
+        demoIndex++
+        demo = Machine(lvl.solvedBoard(), gravity = lvl.gravity, airPressure = lvl.airPressure)
         demoTime = 0.0
     }
 

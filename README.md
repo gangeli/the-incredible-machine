@@ -4,7 +4,7 @@ A from-scratch Android remake of Sierra/Dynamix's 1993 contraption puzzle game, 
 six-year-old can play it on a tablet: big parts, snapping placement, forgiving drops, one-sentence
 goals, a giant Play button, and a celebration when the machine works.
 
-* **Install:** see the [GitHub Pages site](https://gangeli.github.io/the-incredible-machine/) for the APK and step-by-step sideloading instructions.
+* **Install:** see the [GitHub Pages site](https://gangeli.github.io/the-incredible-machine/) for the APK and step-by-step sideloading instructions. (The site lives in `docs/`; a copy of the signed APK is committed there too, so it also works with "Deploy from a branch: main, /docs". Pages has to be switched on once under *Settings -> Pages*; after that every push to `main` redeploys it.)
 * **Size:** the signed release APK is about 100 KB. All art is vector, all sounds are synthesised.
 
 ## Layout

@@ -51,9 +51,12 @@ jobs:
         with:
           files: app/build/outputs/apk/release/app-release.apk
 
+  # Deploys docs/ (plus the freshly built APK) to GitHub Pages. Requires Pages to be enabled once
+  # in the repository settings with "Source: GitHub Actions"; until then this job is allowed to fail.
   pages:
     needs: build
     if: github.ref == 'refs/heads/main'
+    continue-on-error: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages

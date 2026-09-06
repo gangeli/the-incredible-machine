@@ -55,6 +55,7 @@ object Levels {
 
     /** The machine shown running on the title screen. */
     fun demo(): Level = LevelData.demo
+    fun demos(): List<Level> = LevelData.demos
 
     /** Free-form mode: an empty floor and every part. */
     fun freeform(): Level = level("free", "Free play", "Build anything you like!") {
