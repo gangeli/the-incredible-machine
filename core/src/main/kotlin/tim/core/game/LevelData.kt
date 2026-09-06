@@ -373,7 +373,7 @@ object LevelData {
             val hoop = fixed(T.HOOP, 32.0, 256.0, flipped = true)
             tray(T.BASKETBALL, 1)
             tray(T.BOWLING_BALL, 1)
-            solve(T.BASKETBALL, 160.0, 320.0)
+            solve(T.BASKETBALL, 164.0, 340.0)
             solve(T.BOWLING_BALL, 216.0, 40.0)
             goal = Goal.BallInto(hoop)
             hint = "Basketball on the low end, bowling ball high above the other end."

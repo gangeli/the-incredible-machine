@@ -332,8 +332,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
 
     private fun fits(pl: Placement, ignoreIndex: Int): Boolean {
         if (pl.x < 0 || pl.y < 0 || pl.x + pl.w > Machine.WIDTH || pl.y + pl.h > Machine.HEIGHT) return false
-        for (f in board.fixed) if (f.overlaps(pl)) return false
-        board.playerParts.forEachIndexed { i, p -> if (i != ignoreIndex && p.overlaps(pl)) return false }
+        if (tim.core.game.Fit.overlapsAny(pl, board.fixed)) return false
+        if (tim.core.game.Fit.overlapsAny(pl, board.playerParts, ignoreIndex)) return false
         return true
     }
 
@@ -425,26 +425,46 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         return best
     }
 
+    private fun toolName(kind: LinkKind) = when (kind) { LinkKind.ROPE -> "rope"; LinkKind.BELT -> "belt"; LinkKind.WIRE -> "wire" }
+
+    /** What the current tool can be attached to, in words a child can follow. */
+    private fun canTieText(kind: LinkKind) = when (kind) {
+        LinkKind.ROPE -> "A rope ties to a bucket, hook, cage, balloon or seesaw"
+        LinkKind.BELT -> "A belt joins a motor and a conveyor belt"
+        LinkKind.WIRE -> "A wire joins a switch or outlet to a fan, motor, conveyor or flashlight"
+    }
+
+    /** Any part under the point at all (used to explain why it cannot be tied). */
+    private fun anyPartAt(w: Vec2): Int = board.all.indexOfFirst { it.aabb.expanded(8.0).contains(w) }
+
     private fun linkTap(w: Vec2) {
         val lm = linkMode ?: return
         val idx = linkTargetAt(w, lm.kind)
-        if (idx < 0) { linkMode = null; showToast("Rope put away", 1.5); game.play("undo"); return }
+        if (idx < 0) {
+            // explain, and keep the tool in hand
+            val other = anyPartAt(w)
+            game.play("nope")
+            if (other >= 0) showToast("You can't tie the ${board.all[other].type.label.lowercase()}. ${canTieText(lm.kind)}", 4.0)
+            else showToast("Nothing to tie there. ${canTieText(lm.kind)}", 4.0)
+            return
+        }
         val type = board.all[idx].type
         if (lm.from < 0) {
-            if (!LinkRules.canStart(lm.kind, type)) { game.play("nope"); return }
-            if (alreadyLinked(idx, lm.kind)) { game.play("nope"); showToast("That one is already tied", 2.0); return }
+            if (!LinkRules.canStart(lm.kind, type)) { game.play("nope"); showToast("Start with something else: ${canTieText(lm.kind).lowercase()}", 4.0); return }
+            if (alreadyLinked(idx, lm.kind)) { game.play("nope"); showToast("That ${type.label.lowercase()} already has a ${toolName(lm.kind)}", 3.0); return }
             lm.from = idx
             game.play("click")
-            showToast(if (lm.kind == LinkKind.ROPE) "Now tap the other end (or a pulley)" else "Now tap the other one", 6.0)
+            showToast(if (lm.kind == LinkKind.ROPE) "Now tap the other end (or a pulley on the way)" else "Now tap the other one", 6.0)
             return
         }
-        if (idx == lm.from) { linkMode = null; showToast("Rope put away", 1.5); game.play("undo"); return }
+        if (idx == lm.from) { linkMode = null; showToast("${toolName(lm.kind).replaceFirstChar { it.uppercase() }} put away", 1.5); game.play("undo"); return }
         if (lm.kind == LinkKind.ROPE && LinkRules.isPulley(type)) {
-            if (idx !in lm.via) { lm.via.add(idx); game.play("click") }
+            if (idx !in lm.via) { lm.via.add(idx); game.play("click"); showToast("Over the pulley! Now tap the other end", 4.0) }
             return
         }
+        if (alreadyLinked(idx, lm.kind)) { game.play("nope"); showToast("That ${type.label.lowercase()} already has a ${toolName(lm.kind)}", 3.0); return }
         val link = LinkRules.connect(lm.kind, lm.from, board.all[lm.from].type, idx, type, lm.via)
-        if (link == null || alreadyLinked(idx, lm.kind)) { game.play("nope"); showToast("Those don't go together", 2.0); return }
+        if (link == null) { game.play("nope"); showToast("Those two don't go together. ${canTieText(lm.kind)}", 4.0); return }
         pushHistory()
         board.playerLinks.add(link)
         selectedLink = board.playerLinks.size - 1
@@ -598,8 +618,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         tabs.firstOrNull { it.rect.contains(Vec2(x, y)) }?.let { selectTab(it.category); return }
         // tray
         if (layout.tray.contains(Vec2(x, y))) {
-            linkMode = null
             trayPressIndex = tiles.indexOfFirst { it.rect.contains(Vec2(x, y)) && trayTilesArea().contains(Vec2(x, y)) }
+            if (linkMode != null && (trayPressIndex < 0 || tiles[trayPressIndex].type != linkMode!!.tool)) { linkMode = null; showToast("Tool put away", 1.5) }
             trayDragStartY = y; trayDragStartScroll = trayScroll; trayScrolling = false
             return
         }
@@ -725,7 +745,11 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         if (!wasScrolling && !touchMoved && trayPressIndex >= 0 && layout.tray.contains(Vec2(x, y))) {
             val t = tiles[trayPressIndex].type
             trayPressIndex = -1
-            if (t.isTool) { startLinkMode(t); return }
+            if (t.isTool) {
+                if (linkMode?.tool == t) { linkMode = null; showToast("${toolName(LinkRules.kindOf(t)!!).replaceFirstChar { it.uppercase() }} put away", 1.5); game.play("undo") }
+                else startLinkMode(t)
+                return
+            }
             if (remaining(t) <= 0) { game.play("nope"); return }
             val start = Placement(t, snap(Machine.WIDTH - t.w - 40), snap(60.0))
             val spot = findSpot(start, -1) ?: findAnySpot(t) ?: run { game.play("nope"); return }
@@ -790,9 +814,13 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         else if (failed) drawFail(p)
         if (confirmClear) drawClearDialog(p)
         if (toastUntil > t) {
-            val tw = p.textWidth(toast, 26 * u) + 50 * u
-            p.panel(game.width / 2 - tw / 2, layout.field.minY + 12 * u, tw, 54 * u, 16 * u, Style.CREAM)
-            p.textCentered(toast, game.width / 2, layout.field.minY + 39 * u, 26 * u, Style.OUTLINE)
+            var size = 26 * u
+            val maxW = layout.field.width - 40 * u
+            while (size > 16 * u && p.textWidth(toast, size) + 50 * u > maxW) size -= 1 * u
+            val tw = p.textWidth(toast, size) + 50 * u
+            val cx = layout.field.center.x
+            p.panel(cx - tw / 2, layout.field.minY + 12 * u, tw, 54 * u, 16 * u, Style.CREAM)
+            p.textCentered(toast, cx, layout.field.minY + 39 * u, size, Style.OUTLINE)
         }
     }
 

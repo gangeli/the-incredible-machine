@@ -18,8 +18,8 @@ class FuzzTest {
             val a = parts[i]
             assertTrue(a.x >= 0 && a.y >= 0 && a.x + a.w <= Machine.WIDTH && a.y + a.h <= Machine.HEIGHT, "$tag: $a outside the field")
             assertTrue(a.x % Machine.GRID == 0.0 && a.y % Machine.GRID == 0.0, "$tag: $a off grid")
-            for (f in ps.board.fixed) assertFalse(a.overlaps(f), "$tag: $a overlaps fixed $f")
-            for (j in i + 1 until parts.size) assertFalse(a.overlaps(parts[j]), "$tag: $a overlaps ${parts[j]}")
+            for (f in ps.board.fixed) assertFalse(tim.core.game.Fit.overlap(a, f), "$tag: $a overlaps fixed $f")
+            for (j in i + 1 until parts.size) assertFalse(tim.core.game.Fit.overlap(a, parts[j]), "$tag: $a overlaps ${parts[j]}")
         }
         for (item in ps.level.tray) assertTrue(ps.remaining(item.type) >= 0, "$tag: negative tray count for ${item.type}")
         val n = ps.board.all.size

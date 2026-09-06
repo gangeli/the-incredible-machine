@@ -57,7 +57,7 @@ class LevelsTest {
             for ((t, n) in used) assertTrue((counts[t] ?: 0) >= n, "${lvl.id}: solution uses $n x $t but tray has ${counts[t] ?: 0}")
             // fixed parts may overlap each other (a cage over a mouse); player parts may not overlap anything
             val all = lvl.fixed + lvl.solution
-            for (i in lvl.fixed.size until all.size) for (j in all.indices) if (i != j) assertFalse(all[i].overlaps(all[j]), "${lvl.id}: ${all[i]} overlaps ${all[j]}")
+            for (i in lvl.fixed.size until all.size) for (j in all.indices) if (i != j) assertFalse(Fit.overlap(all[i], all[j]), "${lvl.id}: ${all[i]} overlaps ${all[j]}")
             for (p in lvl.solution) assertTrue(p.x >= 0 && p.y >= 0 && p.x + p.w <= Machine.WIDTH && p.y + p.h <= Machine.HEIGHT, "${lvl.id}: $p outside the field")
             for (p in all) assertTrue(p.x % Machine.GRID == 0.0 && p.y % Machine.GRID == 0.0, "${lvl.id}: $p not on the grid")
             val tools = lvl.solutionLinks.groupingBy { tim.core.game.LinkRules.toolFor(it.kind) }.eachCount()

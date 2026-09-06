@@ -45,6 +45,7 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         }
     }
     lateinit var plank: Body
+    private val caps = ArrayList<Body>()
     /** Invisible anchor riding on the end that starts low; a rope tied here pulls that end up. */
     lateinit var ropeEnd: Body
     /** -1: left end down, +1: right end down. Default (unflipped) has the left end down; flipping swaps it. */
@@ -59,13 +60,22 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         targetTilt = tilt
         val base = Body(PolygonShape(listOf(Vec2(x + w / 2, y + 20), Vec2(x + w / 2 + 12, y + h), Vec2(x + w / 2 - 12, y + h))), Vec2.ZERO, BodyKind.STATIC, friction = 0.5, owner = this, tag = "seesaw-base")
         bodies.add(world.add(base))
-        plank = Body(PolygonShape.rect(-w / 2, -6.0, w / 2, 0.0), pivot, BodyKind.KINEMATIC, friction = 0.35, owner = this, tag = "seesaw-plank")
+        plank = Body(PolygonShape.rect(-w / 2, -6.0, w / 2, 0.0), pivot, BodyKind.KINEMATIC, friction = 0.5, owner = this, tag = "seesaw-plank")
         plank.angle = -tilt * MAX_ANGLE * -1.0 // tilt -1 (left down) => angle positive? see below
         // In y-down coords a positive angle rotates the +x end downward, so right-end-down is +MAX.
         plank.angle = tilt * MAX_ANGLE
-        // the plank grips balls so they rest on the low end instead of rolling off (as in the original)
-        plank.gripsCircles = true
         bodies.add(world.add(plank))
+        // small lips at both ends: balls roll along the plank and come to rest against the low one,
+        // but a ball arriving fast hops over and rolls off, like the original's end stops
+        for (side in listOf(-1.0, 1.0)) {
+            val cap = Body(PolygonShape.box(2.0, 1.5), pivot, BodyKind.KINEMATIC, friction = 0.5, owner = this, tag = "seesaw-cap")
+            cap.follow = plank
+            cap.followOffset = Vec2(side * (w / 2 - 2), -7.5)
+            cap.followRotates = true
+            cap.syncFollow()
+            caps.add(cap)
+            bodies.add(world.add(cap))
+        }
         ropedSide = tilt
         ropeEnd = Body(PolygonShape.box(2.0, 2.0), pivot, BodyKind.KINEMATIC, owner = this, tag = "seesaw-rope-end")
         ropeEnd.category = Category.ROPE
@@ -77,16 +87,34 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         bodies.add(world.add(ropeEnd))
     }
 
+    private fun isPlankSurface(b: Body) = b === plank || b in caps
+
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
-        if (self !== plank || !other.isDynamic || tipping) return
+        if (!isPlankSurface(self) || !other.isDynamic || tipping) return
         val n = ev.normalFrom(self)
         if (n.y > -0.3) return // must land on top of the plank
         val rel = ev.point.x - pivot.x
         if (abs(rel) < 6) return // dead zone over the fulcrum
         val side = if (rel < 0) -1 else 1
         if (side == tilt) return // already down on that side
-        // heavy enough to matter: anything moving or resting on the high end tips it
+        // the high end only goes down if what lands there outweighs what rests on the low end
+        val landing = other.mass + loadOn(side, other)
+        if (landing < 0.3 || landing < loadOn(-side, other) * 0.95) return
         startTip(side)
+    }
+
+    /** Total mass of dynamic bodies sitting on (or just above) the plank on one side of the pivot, excluding [except]. */
+    private fun loadOn(side: Int, except: Body?): Double {
+        var m = 0.0
+        val top = plank.aabb.minY
+        for (b in machine.world.bodies) {
+            if (!b.isDynamic || !b.enabled || b === except) continue
+            if ((b.pos.x - pivot.x) * side <= 0 || b.pos.x < x - 4 || b.pos.x > x + w + 4) continue
+            val grounded = b.groundedOn != null && isPlankSurface(b.groundedOn!!)
+            val hovering = b.aabb.maxY >= top - 10 && b.aabb.minY <= plank.aabb.maxY && b.pos.y < pivot.y
+            if (grounded || hovering) m += b.mass
+        }
+        return m
     }
 
     fun startTip(side: Int) {
@@ -98,7 +126,7 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         val risingSide = -side
         for (b in machine.world.bodies) {
             if (!b.isDynamic || !b.enabled) continue
-            val onPlank = b.groundedOn === plank || (b.aabb.maxY >= plank.aabb.minY - 2 && b.aabb.minY <= plank.aabb.maxY && b.pos.x > x - 4 && b.pos.x < x + w + 4 && b.pos.y < pivot.y)
+            val onPlank = (b.groundedOn != null && isPlankSurface(b.groundedOn!!)) || (b.aabb.maxY >= plank.aabb.minY - 2 && b.aabb.minY <= plank.aabb.maxY && b.pos.x > x - 4 && b.pos.x < x + w + 4 && b.pos.y < pivot.y)
             if (!onPlank) continue
             val rel = b.pos.x - pivot.x
             if (rel * risingSide <= 0) continue
@@ -143,8 +171,11 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         p.fillRoundRect(-w / 2, -6.0, w, 6.0, 2.0, Style.WOOD)
         p.fillRect(-w / 2 + 3, -2.5, w - 6, 1.0, Style.WOOD_DARK)
         p.strokeRoundRect(-w / 2, -6.0, w, 6.0, 2.0, Style.OUTLINE, Style.LINE)
-        p.fillRect(-w / 2, -8.0, 6.0, 4.0, Style.RED)
-        p.fillRect(w / 2 - 6, -8.0, 6.0, 4.0, Style.RED)
+        for (side in listOf(-1.0, 1.0)) {
+            val lx = side * (w / 2 - 2) - 2
+            p.fillRoundRect(lx, -9.0, 4.0, 3.5, 1.0, Style.RED)
+            p.strokeRoundRect(lx, -9.0, 4.0, 3.5, 1.0, Style.OUTLINE, 1.2)
+        }
         p.restore()
         p.fillCircle(pv.x, pv.y, 3.0, Style.OUTLINE)
     }
@@ -847,24 +878,26 @@ class Scissors(placement: Placement, index: Int) : Part(placement, index), Sharp
     override fun draw(p: Painter, t: Double) {
         p.save()
         if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
-        val open = if (snapped) 0.04 else 0.32
-        val pivotX = x + 22; val pivotY = y + 16
-        // each half is one rigid piece: a blade to the right of the pivot and a ring handle to the left
+        val open = if (snapped) 0.12 else 0.5
+        val pivotX = x + 20; val pivotY = y + 16
+        // each half is one rigid piece: blade forward of the pivot, shank and finger ring behind it.
+        // The two halves are rotated in opposite directions so the blades and the rings both spread.
         for (side in listOf(1.0, -1.0)) {
             p.save(); p.translate(pivotX, pivotY); p.rotate(side * open)
-            val blade = Path.polygon(0.0, -3.0 * side, 6.0, -3.5 * side, 26.0, -1.0 * side, 26.0, 0.0, 0.0, 2.5 * side)
+            val blade = Path()
+            blade.moveTo(0.0, -3.2 * side); blade.lineTo(26.0, -0.8 * side); blade.lineTo(27.0, 0.0); blade.lineTo(0.0, 2.0 * side); blade.close()
             p.fillPath(blade, Style.STEEL_LIGHT)
-            p.line(4.0, -1.5 * side, 24.0, -0.5 * side, Colors.withAlpha(Style.WHITE, 0.6), 1.0)
+            p.line(3.0, -1.6 * side, 25.0, -0.4 * side, Colors.withAlpha(Style.WHITE, 0.7), 1.0)
             p.strokePath(blade, Style.OUTLINE, 1.4)
-            // handle shaft and finger ring
-            p.line(0.0, 0.0, -9.0, 2.5 * side, Style.OUTLINE, 3.5)
-            p.line(0.0, 0.0, -9.0, 2.5 * side, Style.BLUE, 1.8)
-            p.strokeOval(-21.0, side * 7.0 - 4.5, 13.0, 9.0, Style.OUTLINE, 4.6)
-            p.strokeOval(-21.0, side * 7.0 - 4.5, 13.0, 9.0, Style.BLUE, 2.4)
+            val shank = Path.polygon(0.0, -2.0 * side, -8.0, -2.5 * side, -8.0, 1.5 * side, 0.0, 2.0 * side)
+            p.fillPath(shank, Style.BLUE); p.strokePath(shank, Style.OUTLINE, 1.2)
+            p.strokeOval(-19.0, -4.0 - 0.5 * side, 12.0, 8.5, Style.OUTLINE, 4.4)
+            p.strokeOval(-19.0, -4.0 - 0.5 * side, 12.0, 8.5, Style.BLUE, 2.2)
             p.restore()
         }
-        p.fillCircle(pivotX, pivotY, 2.8, Style.GREY_DARK)
-        p.strokeCircle(pivotX, pivotY, 2.8, Style.OUTLINE, 1.2)
+        p.fillCircle(pivotX, pivotY, 2.6, Style.GREY_DARK)
+        p.strokeCircle(pivotX, pivotY, 2.6, Style.OUTLINE, 1.2)
+        p.line(pivotX - 1.2, pivotY, pivotX + 1.2, pivotY, Style.OUTLINE, 0.8)
         p.restore()
     }
 }
