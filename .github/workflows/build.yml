@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Create a GitHub release with this tag (e.g. v1.0); leave empty for a plain build"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -46,9 +51,12 @@ jobs:
             core/build/snaps/*.png
             app/build/snaps/*.png
       - name: Attach APK to the release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release_tag != ''
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.event.inputs.release_tag || github.ref_name }}
+          name: The Incredible Machine ${{ github.event.inputs.release_tag || github.ref_name }}
+          body: "Signed release APK. See https://gangeli.github.io/the-incredible-machine/ for install instructions."
           files: app/build/outputs/apk/release/app-release.apk
 
   # Deploys docs/ (plus the freshly built APK) to GitHub Pages. Requires Pages to be enabled once
