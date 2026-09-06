@@ -1,0 +1,1 @@
+-keep class tim.android.MainActivity { <init>(); }
