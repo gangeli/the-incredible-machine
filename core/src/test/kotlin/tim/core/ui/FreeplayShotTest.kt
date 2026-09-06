@@ -28,13 +28,27 @@ class FreeplayShotTest {
         assertTrue(ps.running, "free play keeps running after 40 s (no time limit, no fail screen)")
         assertFalse(ps.won)
         val p1 = Java2DPainter.create(1280, 800); g.render(p1); Snap.save(p1, "screen-freeplay-running")
-        // editing is disabled while running; stop, then scrolling the tray reaches the last parts
+        // editing is disabled while running; stop, then the category tabs and scrolling reach every part
         ps.stopRun(); g.update(0.02)
+        val tabs = ps.tabRects()
+        assertTrue(tabs.size >= 6, "free play should show category tabs, got ${tabs.size}")
+        val goalTab = tabs.first { it.first == tim.core.game.PartCategory.GOAL }.second
+        g.touch(TouchEvent(TouchAction.DOWN, goalTab.center.x, goalTab.center.y)); g.update(0.02)
+        g.touch(TouchEvent(TouchAction.UP, goalTab.center.x, goalTab.center.y)); g.update(0.02)
+        assertTrue(ps.visibleTiles().any { it.type == PartType.STAR }, "goal tab should show the star")
+        val linkTab = tabs.first { it.first == tim.core.game.PartCategory.LINK }.second
+        g.touch(TouchEvent(TouchAction.DOWN, linkTab.center.x, linkTab.center.y)); g.update(0.02)
+        g.touch(TouchEvent(TouchAction.UP, linkTab.center.x, linkTab.center.y)); g.update(0.02)
+        assertTrue(ps.visibleTiles().map { it.type }.containsAll(listOf(PartType.ROPE, PartType.BELT, PartType.WIRE)), "link tab should show the rope, belt and wire tools")
+        val machineTab = tabs.first { it.first == tim.core.game.PartCategory.MACHINE }.second
+        g.touch(TouchEvent(TouchAction.DOWN, machineTab.center.x, machineTab.center.y)); g.update(0.02)
+        g.touch(TouchEvent(TouchAction.UP, machineTab.center.x, machineTab.center.y)); g.update(0.02)
+        val p2 = Java2DPainter.create(1280, 800); g.render(p2); Snap.save(p2, "screen-freeplay-tabs")
         val tray = ps.layout.tray
         g.touch(TouchEvent(TouchAction.DOWN, tray.center.x, tray.minY + 300)); g.update(0.02)
         g.touch(TouchEvent(TouchAction.MOVE, tray.center.x, tray.minY + 100)); g.update(0.02)
         g.touch(TouchEvent(TouchAction.MOVE, tray.center.x, tray.minY - 9000)); g.update(0.02)
         g.touch(TouchEvent(TouchAction.UP, tray.center.x, tray.minY - 9000)); g.update(0.02)
-        assertTrue(ps.visibleTiles().any { it.type == PartType.STAR }, "tray should scroll to the last part")
+        assertTrue(ps.visibleTiles().any { it.type == PartType.MOTOR }, "machine tab should scroll down to the motor")
     }
 }

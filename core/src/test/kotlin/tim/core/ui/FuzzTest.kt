@@ -22,6 +22,8 @@ class FuzzTest {
             for (j in i + 1 until parts.size) assertFalse(a.overlaps(parts[j]), "$tag: $a overlaps ${parts[j]}")
         }
         for (item in ps.level.tray) assertTrue(ps.remaining(item.type) >= 0, "$tag: negative tray count for ${item.type}")
+        val n = ps.board.all.size
+        for (l in ps.board.playerLinks) assertTrue(l.from in 0 until n && l.to in 0 until n && l.via.all { it in 0 until n }, "$tag: dangling link $l with $n parts")
     }
 
     private fun fuzz(g: Game, seed: Long, events: Int, tag: String) {

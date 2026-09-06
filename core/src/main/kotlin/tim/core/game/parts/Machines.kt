@@ -45,9 +45,12 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         }
     }
     lateinit var plank: Body
-    /** -1: left end down, +1: right end down. Default (unflipped) has the left end down. */
+    /** Invisible anchor riding on the end that starts low; a rope tied here pulls that end up. */
+    lateinit var ropeEnd: Body
+    /** -1: left end down, +1: right end down. Default (unflipped) has the left end down; flipping swaps it. */
     var tilt = -1
     private var targetTilt = -1
+    private var ropedSide = -1
     val pivot: Vec2 get() = Vec2(x + w / 2, y + 20)
     val tipping get() = plank.angVel != 0.0
 
@@ -63,6 +66,15 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         // the plank grips balls so they rest on the low end instead of rolling off (as in the original)
         plank.gripsCircles = true
         bodies.add(world.add(plank))
+        ropedSide = tilt
+        ropeEnd = Body(PolygonShape.box(2.0, 2.0), pivot, BodyKind.KINEMATIC, owner = this, tag = "seesaw-rope-end")
+        ropeEnd.category = Category.ROPE
+        ropeEnd.mask = 0
+        ropeEnd.follow = plank
+        ropeEnd.followOffset = Vec2(ropedSide * (w / 2 - 4), -6.0)
+        ropeEnd.followRotates = true
+        ropeEnd.syncFollow()
+        bodies.add(world.add(ropeEnd))
     }
 
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
@@ -107,9 +119,15 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
         }
     }
 
-    override fun ropeAnchor() = Vec2(4.0, 14.0)
-    override val ropeBody: Body? get() = null
-    override fun onRopePull() { startTip(if (flipped) 1 else -1) }
+    /** Placement-local coordinates of the rope end (unflipped frame, so [local] maps it back). */
+    override fun ropeAnchor(): Vec2 {
+        if (!built) return Vec2(if (flipped) w - 4 else 4.0, 26.0)
+        val px = ropeEnd.pos.x - x
+        return Vec2(if (flipped) w - px else px, ropeEnd.pos.y - y)
+    }
+    override val ropeBody: Body? get() = if (built) ropeEnd else null
+    /** A pull lifts the roped (low) end, so the other end drops and whatever sat on the roped end flies. */
+    override fun onRopePull() { startTip(-ropedSide) }
 
     override fun draw(p: Painter, t: Double) {
         val pv = pivot
@@ -193,12 +211,18 @@ class Trampoline(placement: Placement, index: Int) : Part(placement, index) {
 class Conveyor(placement: Placement, index: Int) : Part(placement, index) {
     companion object { const val SPEED = 200.0 }
     lateinit var body: Body
-    private var beltDriven = false
+    private var beltDriven = placement.needsPower
     private var beltRunning = false
     private var beltDir = 1
+    init {
+        // for a conveyor "needs power" means "needs a belt from a motor"; electricity is only relevant when wired
+        hasPowerInput = false
+        powered = true
+    }
     private var phase = 0.0
     val running: Boolean get() = powered && (!beltDriven || beltRunning)
-    val direction: Double get() = dir * beltDir
+    /** Belted conveyors turn the way the motor faces; free ones the way they face themselves. */
+    val direction: Double get() = if (beltDriven && beltRunning) beltDir.toDouble() else dir
 
     override fun build(world: World) {
         body = Body(PolygonShape.rect(x, y + 4, x + w, y + h - 4), Vec2.ZERO, BodyKind.STATIC, restitution = 0.1, friction = 0.9, owner = this, tag = "conveyor")
@@ -350,6 +374,7 @@ class Bucket(placement: Placement, index: Int) : Part(placement, index), Contain
 
     override fun ropeAnchor() = Vec2(w / 2, 0.0)
     override val ropeBody: Body? get() = bottom
+    override fun hangingMass(): Double = bottom.mass + contents.sumOf { it.hangingMass() }
     override val worldBounds: AABB get() = if (built) AABB(bottom.pos.x - w / 2, bottom.pos.y - h + 5, bottom.pos.x + w / 2, bottom.pos.y + 5) else placement.aabb
 
     override fun draw(p: Painter, t: Double) {
@@ -822,19 +847,24 @@ class Scissors(placement: Placement, index: Int) : Part(placement, index), Sharp
     override fun draw(p: Painter, t: Double) {
         p.save()
         if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
-        val open = if (snapped) 0.0 else 1.0
-        val pivotX = x + 24; val pivotY = y + 18
-        for (s in listOf(-1.0, 1.0)) {
-            p.save(); p.translate(pivotX, pivotY); p.rotate(s * 0.25 * open)
-            // blade
-            val blade = Path.polygon(0.0, -2.0, 24.0, -1.0, 24.0, 1.0, 0.0, 2.0)
-            Draw.outlinedPath(p, blade, Style.STEEL_LIGHT, 1.5)
-            // handle
-            p.strokeOval(-22.0, -6.0 + s * 2, 20.0, 12.0, Style.OUTLINE, 5.0)
-            p.strokeOval(-22.0, -6.0 + s * 2, 20.0, 12.0, Style.BLUE, 2.5)
+        val open = if (snapped) 0.04 else 0.32
+        val pivotX = x + 22; val pivotY = y + 16
+        // each half is one rigid piece: a blade to the right of the pivot and a ring handle to the left
+        for (side in listOf(1.0, -1.0)) {
+            p.save(); p.translate(pivotX, pivotY); p.rotate(side * open)
+            val blade = Path.polygon(0.0, -3.0 * side, 6.0, -3.5 * side, 26.0, -1.0 * side, 26.0, 0.0, 0.0, 2.5 * side)
+            p.fillPath(blade, Style.STEEL_LIGHT)
+            p.line(4.0, -1.5 * side, 24.0, -0.5 * side, Colors.withAlpha(Style.WHITE, 0.6), 1.0)
+            p.strokePath(blade, Style.OUTLINE, 1.4)
+            // handle shaft and finger ring
+            p.line(0.0, 0.0, -9.0, 2.5 * side, Style.OUTLINE, 3.5)
+            p.line(0.0, 0.0, -9.0, 2.5 * side, Style.BLUE, 1.8)
+            p.strokeOval(-22.0, side * 3.0 - 5.0, 14.0, 10.0, Style.OUTLINE, 5.0)
+            p.strokeOval(-22.0, side * 3.0 - 5.0, 14.0, 10.0, Style.BLUE, 2.6)
             p.restore()
         }
-        p.fillCircle(pivotX, pivotY, 2.5, Style.OUTLINE)
+        p.fillCircle(pivotX, pivotY, 2.8, Style.GREY_DARK)
+        p.strokeCircle(pivotX, pivotY, 2.8, Style.OUTLINE, 1.2)
         p.restore()
     }
 }

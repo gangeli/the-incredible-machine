@@ -16,11 +16,17 @@ class LevelBuilder(val id: String, val title: String, val goalText: String) {
     var timeLimit = 30.0
     var hint = ""
 
-    fun fixed(type: PartType, x: Double, y: Double, flipped: Boolean = false, rotation: Int = 0): Int {
-        fixed.add(Placement(type, x, y, flipped, rotation)); return fixed.size - 1
+    fun fixed(type: PartType, x: Double, y: Double, flipped: Boolean = false, rotation: Int = 0, needsPower: Boolean = false): Int {
+        fixed.add(Placement(type, x, y, flipped, rotation, needsPower)); return fixed.size - 1
     }
     fun tray(type: PartType, count: Int = 1) { tray.add(TrayItem(type, count)) }
-    fun solve(type: PartType, x: Double, y: Double, flipped: Boolean = false, rotation: Int = 0) { solution.add(Placement(type, x, y, flipped, rotation)) }
+    /** Adds a solution part and returns its index in the full part list (fixed parts first). */
+    fun solve(type: PartType, x: Double, y: Double, flipped: Boolean = false, rotation: Int = 0): Int {
+        solution.add(Placement(type, x, y, flipped, rotation)); return fixed.size + solution.size - 1
+    }
+    fun solveRope(from: Int, to: Int, vararg via: Int) { solutionLinks.add(Link(LinkKind.ROPE, from, to, via.toList())) }
+    fun solveBelt(from: Int, to: Int) { solutionLinks.add(Link(LinkKind.BELT, from, to)) }
+    fun solveWire(from: Int, to: Int) { solutionLinks.add(Link(LinkKind.WIRE, from, to)) }
     fun rope(from: Int, to: Int, vararg via: Int, slack: Double = 0.0) { fixedLinks.add(Link(LinkKind.ROPE, from, to, via.toList(), slack)) }
     fun belt(from: Int, to: Int) { fixedLinks.add(Link(LinkKind.BELT, from, to)) }
     fun wire(from: Int, to: Int) { fixedLinks.add(Link(LinkKind.WIRE, from, to)) }

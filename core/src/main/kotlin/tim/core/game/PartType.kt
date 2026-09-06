@@ -1,6 +1,6 @@
 package tim.core.game
 
-enum class PartCategory { BALL, STRUCTURE, MACHINE, CREATURE, TRIGGER, GOAL }
+enum class PartCategory { BALL, STRUCTURE, MACHINE, CREATURE, TRIGGER, GOAL, LINK }
 
 /**
  * Every kind of part in the game. Sizes are in world units (the playfield is 640 x 400 units,
@@ -29,7 +29,7 @@ enum class PartType(
     INCLINE("Ramp", 64.0, 32.0, PartCategory.STRUCTURE, flippable = true),
     STEEP_INCLINE("Steep ramp", 48.0, 48.0, PartCategory.STRUCTURE, flippable = true),
 
-    SEESAW("Seesaw", 96.0, 32.0, PartCategory.MACHINE),
+    SEESAW("Seesaw", 96.0, 32.0, PartCategory.MACHINE, flippable = true),
     TRAMPOLINE("Trampoline", 64.0, 24.0, PartCategory.MACHINE),
     CONVEYOR("Conveyor belt", 96.0, 24.0, PartCategory.MACHINE, flippable = true),
     FAN("Fan", 32.0, 40.0, PartCategory.MACHINE, flippable = true),
@@ -57,7 +57,58 @@ enum class PartType(
 
     HOOP("Basketball hoop", 56.0, 48.0, PartCategory.GOAL, flippable = true),
     BELL("Bell", 40.0, 48.0, PartCategory.GOAL),
-    STAR("Star", 32.0, 32.0, PartCategory.GOAL);
+    STAR("Star", 32.0, 32.0, PartCategory.GOAL),
+
+    /** Tools rather than parts: they create links between two placed parts. */
+    ROPE("Rope", 32.0, 24.0, PartCategory.LINK),
+    BELT("Belt", 32.0, 24.0, PartCategory.LINK),
+    WIRE("Wire", 32.0, 24.0, PartCategory.LINK);
 
     val isBall get() = category == PartCategory.BALL
+    val isTool get() = category == PartCategory.LINK
+}
+
+/** Which parts can be tied, belted or wired together. */
+object LinkRules {
+    val ropeEnds = setOf(PartType.BALLOON, PartType.BUCKET, PartType.CAGE, PartType.HOOK, PartType.SEESAW)
+    fun isPulley(t: PartType) = t == PartType.PULLEY
+    fun ropeEnd(t: PartType) = t in ropeEnds
+    fun beltSource(t: PartType) = t == PartType.MOTOR
+    fun beltConsumer(t: PartType) = t == PartType.CONVEYOR
+    fun wireSource(t: PartType) = t == PartType.SWITCH || t == PartType.OUTLET
+    fun wireConsumer(t: PartType) = t == PartType.FAN || t == PartType.CONVEYOR || t == PartType.MOTOR || t == PartType.FLASHLIGHT || t == PartType.SWITCH
+
+    fun kindOf(tool: PartType): LinkKind? = when (tool) { PartType.ROPE -> LinkKind.ROPE; PartType.BELT -> LinkKind.BELT; PartType.WIRE -> LinkKind.WIRE; else -> null }
+    fun toolFor(kind: LinkKind): PartType = when (kind) { LinkKind.ROPE -> PartType.ROPE; LinkKind.BELT -> PartType.BELT; LinkKind.WIRE -> PartType.WIRE }
+
+    /** Can this part be the first thing tapped with the tool? */
+    fun canStart(kind: LinkKind, t: PartType): Boolean = when (kind) {
+        LinkKind.ROPE -> ropeEnd(t)
+        LinkKind.BELT -> beltSource(t) || beltConsumer(t)
+        LinkKind.WIRE -> wireSource(t) || wireConsumer(t)
+    }
+
+    /** Any part the tool may touch at all (used for highlighting candidates). */
+    fun candidate(kind: LinkKind, t: PartType): Boolean = canStart(kind, t) || (kind == LinkKind.ROPE && isPulley(t))
+
+    /**
+     * Build a properly oriented link between two parts, or null if they cannot be joined.
+     * Wires and belts run from the source to the consumer whichever was tapped first.
+     */
+    fun connect(kind: LinkKind, ai: Int, at: PartType, bi: Int, bt: PartType, via: List<Int> = emptyList()): Link? {
+        if (ai == bi) return null
+        return when (kind) {
+            LinkKind.ROPE -> if (ropeEnd(at) && ropeEnd(bt)) Link(LinkKind.ROPE, ai, bi, via) else null
+            LinkKind.BELT -> when {
+                beltSource(at) && beltConsumer(bt) -> Link(LinkKind.BELT, ai, bi)
+                beltSource(bt) && beltConsumer(at) -> Link(LinkKind.BELT, bi, ai)
+                else -> null
+            }
+            LinkKind.WIRE -> when {
+                wireSource(at) && wireConsumer(bt) && bt != PartType.OUTLET -> Link(LinkKind.WIRE, ai, bi)
+                wireSource(bt) && wireConsumer(at) && at != PartType.OUTLET -> Link(LinkKind.WIRE, bi, ai)
+                else -> null
+            }
+        }
+    }
 }

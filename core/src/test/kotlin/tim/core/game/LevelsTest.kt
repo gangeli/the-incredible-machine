@@ -60,6 +60,12 @@ class LevelsTest {
             for (i in lvl.fixed.size until all.size) for (j in all.indices) if (i != j) assertFalse(all[i].overlaps(all[j]), "${lvl.id}: ${all[i]} overlaps ${all[j]}")
             for (p in lvl.solution) assertTrue(p.x >= 0 && p.y >= 0 && p.x + p.w <= Machine.WIDTH && p.y + p.h <= Machine.HEIGHT, "${lvl.id}: $p outside the field")
             for (p in all) assertTrue(p.x % Machine.GRID == 0.0 && p.y % Machine.GRID == 0.0, "${lvl.id}: $p not on the grid")
+            val tools = lvl.solutionLinks.groupingBy { tim.core.game.LinkRules.toolFor(it.kind) }.eachCount()
+            for ((t, n) in tools) assertTrue((counts[t] ?: 0) >= n, "${lvl.id}: solution ties $n x $t but tray has ${counts[t] ?: 0}")
+            for (l in lvl.solutionLinks) {
+                assertTrue(l.from in all.indices && l.to in all.indices && l.via.all { it in all.indices }, "${lvl.id}: link $l points outside the part list")
+                assertNotNull(tim.core.game.LinkRules.connect(l.kind, l.from, all[l.from].type, l.to, all[l.to].type, l.via), "${lvl.id}: link $l joins incompatible parts")
+            }
         }
     }
 }

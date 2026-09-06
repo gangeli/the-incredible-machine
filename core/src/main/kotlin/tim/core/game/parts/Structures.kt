@@ -101,9 +101,44 @@ class Incline(placement: Placement, index: Int) : Part(placement, index) {
     }
 }
 
+/** Rope, belt and wire tools: they never sit on the board, this only draws their tray icons. */
+class LinkTool(placement: Placement, index: Int) : Part(placement, index) {
+    override fun draw(p: Painter, t: Double) {
+        when (type) {
+            PartType.ROPE -> {
+                // a coiled rope
+                for (i in 0 until 3) {
+                    val cy = y + 7 + i * 5.0
+                    p.strokeOval(x + 4, cy - 4, w - 8, 9.0, Style.OUTLINE, 4.2)
+                    p.strokeOval(x + 4, cy - 4, w - 8, 9.0, Style.WOOD, 2.4)
+                }
+                val tail = Path().moveTo(x + w - 6, y + 18).quadTo(x + w - 2, y + 22, x + w - 8, y + 24)
+                p.strokePath(tail, Style.OUTLINE, 4.2); p.strokePath(tail, Style.WOOD, 2.4)
+            }
+            PartType.BELT -> {
+                // a belt loop around two wheels
+                p.strokeRoundRect(x + 3, y + 5, w - 6, h - 10, (h - 10) / 2, Style.OUTLINE, 4.5)
+                for (cx2 in listOf(x + 3 + (h - 10) / 2, x + w - 3 - (h - 10) / 2)) {
+                    p.fillCircle(cx2, y + h / 2, 4.0, Style.STEEL_LIGHT)
+                    p.strokeCircle(cx2, y + h / 2, 4.0, Style.OUTLINE, 1.4)
+                }
+            }
+            else -> {
+                // a cable with a plug
+                val cable = Path().moveTo(x + 2, y + h - 4).quadTo(x + 10, y - 4, x + w - 12, y + 10)
+                p.strokePath(cable, Style.OUTLINE, 3.2); p.strokePath(cable, Style.GREY_DARK, 1.6)
+                Draw.outlinedRoundRect(p, x + w - 14, y + 4, 12.0, 12.0, 2.0, Style.CREAM, 1.4)
+                p.fillRect(x + w - 11, y + 7, 2.0, 5.0, Style.OUTLINE)
+                p.fillRect(x + w - 7, y + 7, 2.0, 5.0, Style.OUTLINE)
+            }
+        }
+    }
+}
+
 /** Factory mapping part types to implementations. */
 object PartFactory {
     fun create(pl: Placement, index: Int): Part = when (pl.type) {
+        PartType.ROPE, PartType.BELT, PartType.WIRE -> LinkTool(pl, index)
         PartType.BOWLING_BALL, PartType.BASKETBALL, PartType.BASEBALL, PartType.TENNIS_BALL,
         PartType.SUPER_BALL, PartType.CANNONBALL -> Ball(pl, index)
         PartType.BALLOON -> Balloon(pl, index)

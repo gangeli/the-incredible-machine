@@ -77,8 +77,22 @@ object Icons {
         for (lx in listOf(-6.0, 0.0, 6.0)) p.line(lx, -4.0, lx, 12.0, Style.OUTLINE, 2.0)
     }
     fun broom(p: Painter, x: Double, y: Double, s: Double) {
-        p.line(12.0, -20.0, -4.0, 4.0, Style.OUTLINE, 8.0); p.line(12.0, -20.0, -4.0, 4.0, Style.WOOD, 4.5)
-        outlined(p, Path.polygon(-4.0, 2.0, 6.0, 9.0, -6.0, 22.0, -20.0, 12.0), Style.YELLOW)
+        p.line(14.0, -22.0, -2.0, 2.0, Style.OUTLINE, 8.0); p.line(14.0, -22.0, -2.0, 2.0, Style.WOOD, 4.5)
+        outlined(p, Path.polygon(-2.0, 0.0, 8.0, 7.0, -4.0, 22.0, -18.0, 12.0), Style.YELLOW)
+        // bits being swept away
+        p.fillCircle(-22.0, -4.0, 3.0, W); p.strokeCircle(-22.0, -4.0, 3.0, Style.OUTLINE, 1.5)
+        p.fillRoundRect(-26.0, 6.0, 7.0, 5.0, 1.5, W); p.strokeRoundRect(-26.0, 6.0, 7.0, 5.0, 1.5, Style.OUTLINE, 1.5)
+        p.line(-16.0, -12.0, -22.0, -14.0, W, 2.0); p.line(-14.0, 16.0, -20.0, 20.0, W, 2.0)
+    }
+    fun scissors(p: Painter, x: Double, y: Double, s: Double) {
+        for (side in listOf(1.0, -1.0)) {
+            p.save(); p.rotate(side * 0.35)
+            outlined(p, Path.polygon(0.0, -3.0 * side, 22.0, -1.0 * side, 22.0, 0.0, 0.0, 3.0 * side))
+            p.strokeOval(-20.0, side * 3.0 - 6.0, 14.0, 12.0, Style.OUTLINE, 5.0)
+            p.strokeOval(-20.0, side * 3.0 - 6.0, 14.0, 12.0, W, 2.5)
+            p.restore()
+        }
+        p.fillCircle(0.0, 0.0, 3.0, Style.OUTLINE)
     }
     fun bulb(p: Painter, x: Double, y: Double, s: Double) {
         p.fillCircle(0.0, -6.0, 15.0, Style.YELLOW); p.strokeCircle(0.0, -6.0, 15.0, Style.OUTLINE, 2.5)

@@ -30,8 +30,8 @@ abstract class Part(val placement: Placement, val index: Int) {
     var built = false
 
     /** Electric power state, refreshed each step from wires; parts with no wires default to on. */
-    var powered: Boolean = true
-    var hasPowerInput: Boolean = false
+    var powered: Boolean = !placement.needsPower
+    var hasPowerInput: Boolean = placement.needsPower
 
     /** Convert a placement-local point (0..w, 0..h, unflipped) to world space, honouring flips. */
     fun local(lx: Double, ly: Double): Vec2 = Vec2(x + (if (flipped) w - lx else lx), y + ly)
@@ -67,6 +67,10 @@ abstract class Part(val placement: Placement, val index: Int) {
     open fun pulleyPoint(): Vec2? = null
     /** Hub for belts (world coords). */
     open fun beltHub(): Vec2? = null
+    /** Where a wire plugs in (world coords). */
+    open fun plugPoint(): Vec2 = Vec2(cx, y + h - 3)
+    /** Mass hanging on a rope tied to this part (the part plus whatever it carries). */
+    open fun hangingMass(): Double = bodies.firstOrNull { it.isDynamic }?.mass ?: 0.0
 
     /** Bounding box used for goals and pick tests, following the main body when the part moves. */
     open val worldBounds: AABB

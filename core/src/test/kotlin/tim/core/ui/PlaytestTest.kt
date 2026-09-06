@@ -68,6 +68,19 @@ class PlaytestTest {
                 assertEquals(sol.flipped, placed.flipped, "${level.id}: ${sol.type} flipped")
                 assertEquals(sol.rotation, placed.rotation, "${level.id}: ${sol.type} rotation")
             }
+            // tie ropes, belts and wires by tapping the tool tile and then the parts, like a child would
+            for (link in level.solutionLinks) {
+                val tool = tim.core.game.LinkRules.toolFor(link.kind)
+                val tile = ps.visibleTiles().firstOrNull { it.type == tool } ?: error("${level.id}: no tray tile for $tool")
+                tap(g, tile.rect.center.x, tile.rect.center.y)
+                assertTrue(ps.linking, "${level.id}: tapping the $tool tile should start tying")
+                for (idx in listOf(link.from) + link.via + listOf(link.to)) {
+                    val c = ps.layout.toScreen(ps.board.all[idx].aabb.center)
+                    tap(g, c.x, c.y)
+                }
+                assertFalse(ps.linking, "${level.id}: link should be complete")
+                assertTrue(ps.board.playerLinks.any { it.kind == link.kind && it.from == link.from && it.to == link.to && it.via == link.via }, "${level.id}: expected $link in ${ps.board.playerLinks}")
+            }
             shot(g, "playtest-${level.id}-built")
             // press the big play button
             val play = ps.playButtonRect()

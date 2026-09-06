@@ -408,6 +408,60 @@ object LevelData {
             goal = Goal.Activate(star)
             hint = "The switch powers the motor, the motor drives the belt."
         },
+        level("l37", "Belt it", "Get the ball to the star") {
+            floor()
+            val outlet = fixed(T.OUTLET, 96.0, 352.0)
+            val motor = fixed(T.MOTOR, 136.0, 344.0)
+            wire(outlet, motor)
+            val conveyor = fixed(T.CONVEYOR, 232.0, 360.0, needsPower = true)
+            fixed(T.BOWLING_BALL, 248.0, 328.0)
+            val star = fixed(T.STAR, 520.0, 352.0)
+            tray(T.BELT, 1)
+            solveBelt(motor, conveyor)
+            goal = Goal.Activate(star)
+            hint = "The belt is stuck. Tap the belt tool, then the motor, then the conveyor."
+        },
+        level("l38", "Wire it", "Get the ball to the star") {
+            floor()
+            val sw = fixed(T.SWITCH, 120.0, 344.0)
+            val fan = fixed(T.FAN, 336.0, 344.0, needsPower = true)
+            fixed(T.TENNIS_BALL, 400.0, 368.0)
+            val star = fixed(T.STAR, 592.0, 352.0)
+            tray(T.WIRE, 1)
+            tray(T.BASEBALL, 1)
+            solveWire(sw, fan)
+            solve(T.BASEBALL, 128.0, 120.0)
+            goal = Goal.Activate(star)
+            hint = "The fan needs power: wire it to the switch, then drop the ball on the switch."
+        },
+        level("l39", "Hang the bucket", "Get the ball into the bucket") {
+            floor()
+            fixed(T.WOOD_WALL, 40.0, 200.0)
+            fixed(T.INCLINE, 40.0, 168.0)
+            fixed(T.BASKETBALL, 48.0, 136.0)
+            val hook = fixed(T.HOOK, 136.0, 0.0)
+            val bucket = fixed(T.BUCKET, 120.0, 240.0)
+            tray(T.ROPE, 1)
+            solveRope(hook, bucket)
+            goal = Goal.BallInto(bucket)
+            hint = "The bucket will fall! Tie it to the hook with the rope."
+        },
+        level("l40", "Pull the seesaw", "Get the ball to the star") {
+            floor()
+            val seesaw = fixed(T.SEESAW, 200.0, 352.0)
+            fixed(T.BASKETBALL, 208.0, 320.0)
+            val p1 = fixed(T.PULLEY, 200.0, 24.0)
+            val p2 = fixed(T.PULLEY, 424.0, 24.0)
+            val bucket = fixed(T.BUCKET, 408.0, 200.0)
+            val star = fixed(T.STAR, 120.0, 224.0)
+            tray(T.ROPE, 1)
+            tray(T.BOWLING_BALL, 1)
+            solveRope(seesaw, bucket, p1, p2)
+            solve(T.BOWLING_BALL, 416.0, 56.0)
+            goal = Goal.Activate(star)
+            hint = "Tie the seesaw to the bucket over the pulleys, then drop the heavy ball in the bucket."
+            timeLimit = 20.0
+        },
     )
 
     val demo: Level = levels[11]

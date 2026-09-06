@@ -19,6 +19,7 @@ class Effect(val kind: Kind, val pos: Vec2, val life: Double, val size: Double =
 /** A rope as placed on the board, with its physical constraint. */
 class RopeLink(val link: Link, val from: Part, val to: Part, val pulleys: List<Part>, val rope: Rope) {
     var cut = false
+    var pulled = false
 }
 
 /**
@@ -31,6 +32,8 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         const val HEIGHT = 400.0
         /** Placement snaps to this many world units: fine enough that positions are not degenerate, coarse enough to help alignment. */
         const val GRID = 4.0
+        /** A rope tied to a seesaw end tips it once at least this much mass hangs on the other end. */
+        const val PULL_MASS = 15.0
     }
 
     val world = World(Vec2(0.0, gravity), width, height).also { it.airPressure = airPressure }
@@ -147,7 +150,7 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         for (l in belts) {
             val src = parts.getOrNull(l.from) ?: continue
             val dst = parts.getOrNull(l.to) ?: continue
-            dst.setBeltDrive(src.spinOutput, 1)
+            dst.setBeltDrive(src.spinOutput, if (src.flipped) -1 else 1)
         }
     }
 
@@ -165,6 +168,12 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
             if (ev.other.isSensor) (ev.other.owner as? Part)?.onSensor(ev.other, ev.sensor)
         }
         for (p in allParts) p.postStep()
+        // a heavy enough load on a rope pulls whatever the other end is tied to (seesaws tip)
+        for (r in ropes) {
+            if (r.cut || r.pulled || !r.rope.taut) continue
+            if (r.to.hangingMass() >= PULL_MASS) { r.pulled = true; r.from.onRopePull() }
+            else if (r.from.hangingMass() >= PULL_MASS) { r.pulled = true; r.to.onRopePull() }
+        }
         // things that leave the playfield far enough are gone for good (the original clamps far off-screen)
         for (b in world.bodies) if (b.isDynamic && b.enabled && (b.pos.y > height + 160 || b.pos.y < -400 || b.pos.x < -160 || b.pos.x > width + 160)) b.enabled = false
         val it = effects.iterator()
@@ -197,14 +206,37 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
     fun partOf(b: Body): Part? = b.owner as? Part
 
     fun draw(p: Painter, t: Double) {
+        drawWires(p)
         for (part in allParts) part.draw(p, t)
         drawRopes(p)
         drawBelts(p)
         for (e in effects) Effects.draw(p, e)
     }
 
-    /** Draws ropes and belts only (used by the editor preview, which draws parts itself). */
-    fun drawLinksOnly(p: Painter) { drawRopes(p); drawBelts(p) }
+    /** Draws ropes, belts and wires only (used by the editor preview, which draws parts itself). */
+    fun drawLinksOnly(p: Painter) { drawWires(p); drawRopes(p); drawBelts(p) }
+
+    /** Polyline of a link in world space (for hit testing and highlighting in the editor). */
+    fun linkPath(l: Link): List<Vec2> = when (l.kind) {
+        LinkKind.ROPE -> ropes.firstOrNull { it.link === l }?.rope?.points() ?: emptyList()
+        LinkKind.BELT -> listOfNotNull(parts.getOrNull(l.from)?.beltHub(), parts.getOrNull(l.to)?.beltHub())
+        LinkKind.WIRE -> listOfNotNull(parts.getOrNull(l.from)?.plugPoint(), parts.getOrNull(l.to)?.plugPoint())
+    }
+
+    private fun drawWires(p: Painter) {
+        for (l in wires) {
+            val a = parts.getOrNull(l.from)?.plugPoint() ?: continue
+            val b = parts.getOrNull(l.to)?.plugPoint() ?: continue
+            val sag = 10.0 + a.distanceTo(b) * 0.08
+            val path = tim.core.render.Path()
+            path.moveTo(a.x, a.y)
+            path.quadTo((a.x + b.x) / 2, maxOf(a.y, b.y) + sag, b.x, b.y)
+            p.strokePath(path, Style.OUTLINE, 3.2)
+            p.strokePath(path, Style.GREY_DARK, 1.6)
+            // plug at the consumer end
+            p.fillRoundRect(b.x - 4, b.y - 3, 8.0, 6.0, 1.5, Style.OUTLINE)
+        }
+    }
 
     private fun drawRopes(p: Painter) {
         for (r in ropes) {
