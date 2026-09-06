@@ -55,7 +55,7 @@ enum class PartType(
     OUTLET("Outlet", 24.0, 32.0, PartCategory.TRIGGER),
     FLASHLIGHT("Flashlight", 48.0, 24.0, PartCategory.TRIGGER, flippable = true),
 
-    HOOP("Basketball hoop", 48.0, 48.0, PartCategory.GOAL, flippable = true),
+    HOOP("Basketball hoop", 56.0, 48.0, PartCategory.GOAL, flippable = true),
     BELL("Bell", 40.0, 48.0, PartCategory.GOAL),
     STAR("Star", 32.0, 32.0, PartCategory.GOAL);
 

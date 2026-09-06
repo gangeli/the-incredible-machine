@@ -57,7 +57,7 @@ class ScreensTest {
         val placed = ps.board.playerParts[0]
         println("placed at ${placed.x},${placed.y}")
         shot(g, "screen-play-placed")
-        tap(g, g.width - 80.0, 46.0)
+        tap(g, tray.center.x, g.height - 70.0)
         assertTrue(ps.running, "machine should be running")
         repeat(30) { g.update(0.05) }
         shot(g, "screen-play-running")

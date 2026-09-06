@@ -54,6 +54,15 @@ sealed class Goal {
         override val text get() = "Get Mort to the cheese"
     }
 
+    /** A creature must be trapped under a cage. */
+    data class Trapped(val creature: Int) : Goal() {
+        override fun check(m: Machine): Boolean {
+            val c = m.parts.getOrNull(creature) ?: return false
+            return m.parts.any { it is tim.core.game.parts.Cage && it.traps(c) }
+        }
+        override val text get() = "Trap it under the cage"
+    }
+
     /** All listed goals must be satisfied at the same time. */
     data class All(val goals: List<Goal>) : Goal() {
         override fun check(m: Machine) = goals.all { it.check(m) }

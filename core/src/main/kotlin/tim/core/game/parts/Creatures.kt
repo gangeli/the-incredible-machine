@@ -70,7 +70,7 @@ class Mouse(placement: Placement, index: Int) : Creature(placement, index, 0.1, 
     override fun think() {
         if (isCaged()) { walking = false; return }
         val cheese = machine.parts.filterIsInstance<Cheese>().filter { !it.eaten }.minByOrNull { abs(it.center.x - pos.x) }
-        val cat = machine.parts.filterIsInstance<Cat>().firstOrNull { !it.caught && abs(it.pos.x - pos.x) < 110 && abs(it.pos.y - pos.y) < 40 }
+        val cat = machine.parts.filterIsInstance<Cat>().firstOrNull { !it.caught && !it.isCaged() && abs(it.pos.x - pos.x) < 110 && abs(it.pos.y - pos.y) < 40 }
         if (cat != null) { facing = if (cat.pos.x > pos.x) -1.0 else 1.0; walking = true; return }
         if (cheese != null && abs(cheese.center.y - pos.y) < 48) {
             val dx = cheese.center.x - pos.x

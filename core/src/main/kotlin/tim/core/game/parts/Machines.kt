@@ -487,7 +487,7 @@ class Cannon(placement: Placement, index: Int) : Part(placement, index), Activat
     override fun build(world: World) {
         val barrel = Body(PolygonShape.rect(x, y + 8, x + w, y + h), Vec2.ZERO, BodyKind.STATIC, restitution = 0.4, friction = 0.5, owner = this, tag = "cannon")
         bodies.add(world.add(barrel))
-        fuse = Body(PolygonShape.box(10.0, 10.0), local(4.0, 6.0), BodyKind.STATIC, owner = this, tag = "fuse")
+        fuse = Body(PolygonShape.box(14.0, 12.0), local(4.0, 8.0), BodyKind.STATIC, owner = this, tag = "fuse")
         fuse.isSensor = true
         bodies.add(world.add(fuse))
     }
@@ -549,7 +549,7 @@ class Dynamite(placement: Placement, index: Int) : Part(placement, index), Activ
     override fun build(world: World) {
         body = Body(PolygonShape.box(w / 2 - 2, 10.0), Vec2(cx, y + h - 10), BodyKind.DYNAMIC, mass = 9.0, restitution = 0.2, friction = 0.7, owner = this, tag = "dynamite")
         bodies.add(world.add(body))
-        val fuse = Body(PolygonShape.box(6.0, 8.0), Vec2(cx, y + 4), BodyKind.KINEMATIC, owner = this, tag = "dyn-fuse")
+        val fuse = Body(PolygonShape.box(16.0, 12.0), Vec2(cx, y + 4), BodyKind.KINEMATIC, owner = this, tag = "dyn-fuse")
         fuse.isSensor = true
         fuse.follow = body
         fuse.followOffset = Vec2(0.0, -14.0)
@@ -612,6 +612,12 @@ class Rocket(placement: Placement, index: Int) : Part(placement, index), Activat
         exhaust.follow = body
         exhaust.followOffset = Vec2(0.0, h / 2 + 4)
         bodies.add(world.add(exhaust))
+        // the fuse dangles around the base: a candle standing next to the rocket lights it
+        val fuse = Body(PolygonShape.box(24.0, 16.0), Vec2(cx, y + h - 8), BodyKind.KINEMATIC, owner = this, tag = "rocket-fuse")
+        fuse.isSensor = true
+        fuse.follow = body
+        fuse.followOffset = Vec2(0.0, h / 2 - 8)
+        bodies.add(world.add(fuse))
     }
 
     override fun onFlame(source: Part) { light() }

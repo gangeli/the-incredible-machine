@@ -98,6 +98,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     lateinit var layout: PlayLayout
     private val buttons = ArrayList<Button>()
     private lateinit var playButton: Button
+    private lateinit var stopButton: Button
     private lateinit var homeButton: Button
     private lateinit var undoButton: Button
     private lateinit var resetButton: Button
@@ -131,11 +132,15 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         resetButton = add(bh, Style.ORANGE, Icons::broom) { clearAll() }
         hintButton = add(bh, Style.YELLOW, Icons::bulb) { showHint() }
         hintButton.visible = !isFreeform
-        // play button on the right of the top bar, wide
-        val pw = bh * 2.2
-        playButton = Button(AABB(tb.maxX - pw - 12 * u, by, tb.maxX - 12 * u, by + bh), Style.GREEN, Icons::play, "", ::togglePlay)
+        // giant play/stop button at the bottom of the tray column
+        val tr = layout.tray
+        val ph = 118 * u
+        playButton = Button(AABB(tr.minX + 10 * u, tr.maxY - ph - 12 * u, tr.maxX - 10 * u, tr.maxY - 12 * u), Style.GREEN, { p, x, y, sz -> if (running) Icons.stop(p, x, y, sz) else Icons.play(p, x, y, sz) }, "", ::togglePlay)
         playButton.attention = 1.0
         buttons.add(playButton)
+        stopButton = Button(playButton.rect, Style.RED, Icons::stop, "", ::togglePlay)
+        stopButton.visible = false
+        buttons.add(stopButton)
         // floating part actions (positioned when a part is selected)
         val fs = 64 * u
         flipButton = Button(AABB(0.0, 0.0, fs, fs), Style.TEAL, Icons::flip) { flipSelected() }
@@ -171,6 +176,9 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         val size = layout.tray.width - 24 * u
         return tiles.size * (size * 0.8 + 10 * u) + 24 * u
     }
+
+    /** Tray area available for tiles (above the play button). */
+    private fun trayTilesArea(): AABB = AABB(layout.tray.minX, layout.tray.minY, layout.tray.maxX, playButton.rect.minY - 10 * game.u)
 
     /** Remaining count for a tray type. */
     fun remaining(t: PartType): Int {
@@ -274,6 +282,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
 
     private fun togglePlay() { if (running) stopRun() else startRun() }
 
+    private fun syncPlayButtons() { playButton.visible = !running; stopButton.visible = running }
+
     fun startRun() {
         if (running) return
         selected = -1
@@ -281,6 +291,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         machine = Machine(board.copy(), gravity = level.gravity, airPressure = level.airPressure)
         won = false; failed = false; runTime = 0.0; accumulator = 0.0; settledFor = 0.0
         confetti = null
+        syncPlayButtons()
         game.play("start")
     }
 
@@ -290,6 +301,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         confetti = null
         nextButton.visible = false; replayButton.visible = false
         playButton.attention = 1.0
+        syncPlayButtons()
     }
 
     private fun nextLevel() {
@@ -424,7 +436,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             }
             if (abs(dy) > 12 * game.u || trayScrolling) {
                 trayScrolling = true
-                val maxScroll = maxOf(0.0, trayContentHeight() - layout.tray.height)
+                val maxScroll = maxOf(0.0, trayContentHeight() - trayTilesArea().height)
                 trayScroll = (trayDragStartScroll - dy).coerceIn(0.0, maxScroll)
                 buildTiles()
             }
@@ -527,6 +539,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         drawTray(p, t)
         drawTopBar(p, t)
         drawSelectionButtons(p)
+        syncPlayButtons()
         for (b in buttons) if (b !== nextButton && b !== replayButton) b.draw(p, u, t)
         drawDragGhost(p, t)
         if (won) drawWin(p)
@@ -599,11 +612,12 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         val tr = layout.tray
         val u = game.u
         p.fillRect(tr.minX, tr.minY, tr.width, tr.height, Colors.rgb(0xC8D8EA))
+        val area = trayTilesArea()
         p.save()
-        p.clipRect(tr.minX, tr.minY, tr.width, tr.height)
+        p.clipRect(area.minX, area.minY, area.width, area.height)
         for (tile in tiles) {
             val r = tile.rect
-            if (r.maxY < tr.minY || r.minY > tr.maxY) continue
+            if (r.maxY < area.minY || r.minY > area.maxY) continue
             val n = remaining(tile.type)
             val enabled = n > 0 && !running
             p.fillRoundRect(r.minX, r.minY + 3 * u, r.width, r.height, 14 * u, Colors.withAlpha(Style.OUTLINE, 0.2))
@@ -634,7 +648,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         p.fillRect(tb.minX, tb.minY, tb.width, tb.height, Style.NAVY)
         // goal panel between the small buttons and the play button
         val left = hintButton.rect.maxX + 14 * u
-        val right = playButton.rect.minX - 14 * u
+        val right = tb.maxX - 14 * u
         val gw = right - left
         if (gw > 100 * u) {
             p.fillRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, Style.CREAM)
@@ -647,8 +661,6 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
                 p.textCentered("Level ${levelIndex + 1}", left + 6 * u + 46 * u, tb.minY + tb.height - 6 * u, 14 * u, Colors.withAlpha(Style.OUTLINE, 0.5))
             }
         }
-        // play/stop icon swap
-        if (running) { playButton.label = ""; }
     }
 
     private fun drawSelectionButtons(p: Painter) {
