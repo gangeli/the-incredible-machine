@@ -33,6 +33,22 @@ jobs:
         run: ./gradlew :app:testDebugUnitTest --no-daemon
       - name: Build release APK
         run: ./gradlew :app:assembleRelease --no-daemon
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build the browser version (Kotlin/JS, minified with esbuild)
+        run: npm i -g esbuild && ./gradlew :web:webDist --no-daemon
+      - name: Play a puzzle in headless Chromium
+        run: |
+          npm i -g playwright http-server
+          npx playwright install --with-deps chromium
+          http-server web/build/webdist -p 8123 -s -c-1 &
+          sleep 1
+          NODE_PATH=$(npm root -g) node web/e2e/smoke.cjs http://127.0.0.1:8123/ web/build/e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: incredible-machine-web
+          path: web/build/webdist
       - name: Report APK size
         run: ls -la app/build/outputs/apk/release/ && stat -c "%s bytes" app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
@@ -46,6 +62,7 @@ jobs:
           path: |
             core/build/snaps/*.png
             app/build/snaps/*.png
+            web/build/e2e/*.png
       - name: Attach APK to the release
         if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release_tag != ''
         uses: softprops/action-gh-release@v2
@@ -55,7 +72,7 @@ jobs:
           body: "Signed release APK. See https://gangeli.github.io/the-incredible-machine/ for install instructions."
           files: app/build/outputs/apk/release/app-release.apk
 
-  # Deploys docs/ (plus the freshly built APK) to GitHub Pages. Requires Pages to be enabled once
+  # Deploys docs/ (plus the freshly built APK and the browser build under play/) to GitHub Pages. Requires Pages to be enabled once
   # in the repository settings with "Source: GitHub Actions"; until then this job is allowed to fail.
   pages:
     needs: build
@@ -77,6 +94,10 @@ jobs:
         with:
           name: incredible-machine-apk
           path: docs
+      - uses: actions/download-artifact@v4
+        with:
+          name: incredible-machine-web
+          path: docs/play
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs

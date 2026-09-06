@@ -1,24 +1,29 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm")
-    `java-library`
+    id("org.jetbrains.kotlin.multiplatform")
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
 kotlin {
-    compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
+    jvm {
+        compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
+            testLogging { events("failed"); showStandardStreams = false }
+            maxHeapSize = "1g"
+        }
+    }
+    js {
+        browser()
+    }
+    sourceSets {
+        val jvmTest by getting {
+            dependencies {
+                implementation(project.dependencies.platform("org.junit:junit-bom:5.14.4"))
+                implementation("org.junit.jupiter:junit-jupiter")
+                runtimeOnly("org.junit.platform:junit-platform-launcher")
+            }
+        }
+    }
 }
 
-dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.14.4"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.test {
-    useJUnitPlatform()
-    testLogging { events("failed"); showStandardStreams = false }
-    maxHeapSize = "1g"
-}
+// keep the old task name working for scripts and docs
+tasks.register("test") { dependsOn("jvmTest") }

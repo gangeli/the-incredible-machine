@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Incredible Machine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Incredible Machine">
+  <meta name="theme-color" content="#2E3D6B">
+  <meta name="description" content="A tablet-friendly Incredible Machine puzzle game. Build contraptions, play it in your browser or add it to your home screen.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #2E3D6B; overscroll-behavior: none; }
+    body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    canvas#game { display: block; touch-action: none; position: fixed; inset: 0; }
+    #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #F9D66B; font: bold 28px system-ui, sans-serif; }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="loading">Loading the machine…</div>
+  <script src="tim.js?v=@VERSION@"></script>
+</body>
+</html>
