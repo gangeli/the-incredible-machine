@@ -52,14 +52,14 @@ class Wall(placement: Placement, index: Int) : Part(placement, index) {
         p.fillRect(x, y, w, h, Style.WOOD)
         p.save()
         p.clipRect(x, y, w, h)
+        Draw.woodGrain(p, x, y, w, h, vertical = h > w)
+        // bevel: light top edge, dark bottom edge
         if (w >= h) {
-            var gx = x + 6
-            while (gx < x + w) { p.line(gx, y + 3, gx + 8, y + h - 3, Style.WOOD_DARK, 1.0); gx += 14 }
-            p.line(x, y + h / 2, x + w, y + h / 2, Colors.withAlpha(Style.WOOD_DARK, 0.5), 1.0)
+            p.fillRect(x, y, w, 2.0, Colors.withAlpha(Style.WHITE, 0.35))
+            p.fillRect(x, y + h - 2, w, 2.0, Colors.withAlpha(Style.WOOD_DARK, 0.6))
         } else {
-            var gy = y + 6
-            while (gy < y + h) { p.line(x + 3, gy, x + w - 3, gy + 8, Style.WOOD_DARK, 1.0); gy += 14 }
-            p.line(x + w / 2, y, x + w / 2, y + h, Colors.withAlpha(Style.WOOD_DARK, 0.5), 1.0)
+            p.fillRect(x, y, 2.0, h, Colors.withAlpha(Style.WHITE, 0.35))
+            p.fillRect(x + w - 2, y, 2.0, h, Colors.withAlpha(Style.WOOD_DARK, 0.6))
         }
         p.restore()
         p.strokeRect(x, y, w, h, Style.OUTLINE, Style.LINE)
@@ -84,21 +84,19 @@ class Incline(placement: Placement, index: Int) : Part(placement, index) {
         val v = vertices()
         val path = Path.polygon(v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y)
         p.fillPath(path, Style.WOOD)
-        p.save()
-        p.clipRect(x, y, w, h)
-        // grain lines parallel to the slope
-        val n = 3
+        // grain lines parallel to the slope, kept inside the triangle
+        val grain = Colors.withAlpha(Style.WOOD_DARK, 0.55)
+        val n = maxOf(2, (h / 9).toInt())
         for (i in 1..n) {
-            val f = i / (n + 1.0)
-            val ax = v[0].x + (v[2].x - v[0].x) * f
-            val ay = v[0].y + (v[2].y - v[0].y) * f
-            val bx = v[0].x + (v[1].x - v[0].x) * f + (v[2].x - v[0].x) * (1 - f) * 0.0
-            val by = v[0].y + (v[1].y - v[0].y) * f
-            p.line(ax, ay, v[1].x + (ax - v[2].x) * 0.0 * f + (bx - bx), by, Style.WOOD_DARK, 1.0)
+            val d = h * i / (n + 1.0)                       // vertical offset below the slope
+            val ax = v[0].x; val ay = v[0].y + d           // on the vertical side
+            val bx = v[0].x + (v[1].x - v[0].x) * (1 - d / h)  // where the shifted line meets the base
+            val by = v[1].y
+            p.line(ax, ay, bx, by, grain, 1.0)
         }
-        p.restore()
-        // slope surface highlight
-        p.line(v[0].x, v[0].y, v[1].x, v[1].y, Colors.withAlpha(Style.WHITE, 0.35), 2.0)
+        // slope surface highlight and base shadow
+        p.line(v[0].x, v[0].y, v[1].x, v[1].y, Colors.withAlpha(Style.WHITE, 0.4), 2.2)
+        p.line(minOf(v[1].x, v[2].x) + 3, v[1].y - 1.5, maxOf(v[1].x, v[2].x) - 3, v[1].y - 1.5, Colors.withAlpha(Style.WOOD_DARK, 0.6), 2.0)
         p.strokePath(path, Style.OUTLINE, Style.LINE)
     }
 }

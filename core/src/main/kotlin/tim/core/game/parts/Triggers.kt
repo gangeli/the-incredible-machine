@@ -134,8 +134,8 @@ class Hoop(placement: Placement, index: Int) : Part(placement, index), Container
     override fun draw(p: Painter, t: Double) {
         p.save()
         if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
-        Draw.outlinedRoundRect(p, x, y, 6.0, 30.0, 1.5, Style.WHITE)
-        p.fillRect(x + 1, y + 6, 4.0, 16.0, Style.RED)
+        Draw.outlinedRoundRect(p, x, y, 8.0, 32.0, 2.0, Style.WHITE)
+        p.strokeRect(x + 2, y + 8, 4.0, 14.0, Style.RED, 1.2)
         // rim
         p.fillRoundRect(x + 4, y + 20, w - 6, 4.0, 2.0, Style.ORANGE)
         p.strokeRoundRect(x + 4, y + 20, w - 6, 4.0, 2.0, Style.OUTLINE, 1.5)

@@ -5,6 +5,7 @@ import tim.core.physics.Body
 import tim.core.physics.ContactEvent
 import tim.core.physics.Vec2
 import tim.core.physics.World
+import tim.core.render.Colors
 import tim.core.render.Painter
 import tim.core.render.Path
 
@@ -118,9 +119,46 @@ object Draw {
         if (marks != null) {
             p.save(); p.translate(cx, cy); p.rotate(angle); marks(p); p.restore()
         }
-        p.fillCircle(cx - r * 0.35, cy - r * 0.4, r * 0.22, 0x99FFFFFF.toInt())
+        // soft specular highlight
+        p.gradientCircle(cx - r * 0.38, cy - r * 0.42, r * 0.4, 0xB3FFFFFF.toInt(), 0x00FFFFFF, 0.0, 0.0)
         p.strokeCircle(cx, cy, r, Style.OUTLINE, Style.LINE)
     }
+    /** Wood grain: gently waving lines and a knot, clipped by the caller. */
+    fun woodGrain(p: Painter, x: Double, y: Double, w: Double, h: Double, vertical: Boolean) {
+        val col = Colors.withAlpha(Style.WOOD_DARK, 0.55)
+        if (!vertical) {
+            val n = maxOf(1, (h / 7).toInt())
+            for (i in 0 until n) {
+                val gy = y + h * (i + 0.5) / n
+                val path = Path().moveTo(x + 2, gy)
+                var gx = x + 2
+                var k = 0
+                while (gx < x + w - 2) {
+                    val nx = minOf(x + w - 2, gx + 14)
+                    path.quadTo((gx + nx) / 2, gy + (if ((k + i) % 2 == 0) 1.2 else -1.2), nx, gy)
+                    gx = nx; k++
+                }
+                p.strokePath(path, col, 0.9)
+            }
+            p.strokeOval(x + w * 0.62, y + h * 0.28, 5.0, h * 0.45, col, 0.9)
+        } else {
+            val n = maxOf(1, (w / 7).toInt())
+            for (i in 0 until n) {
+                val gx = x + w * (i + 0.5) / n
+                val path = Path().moveTo(gx, y + 2)
+                var gy = y + 2
+                var k = 0
+                while (gy < y + h - 2) {
+                    val ny = minOf(y + h - 2, gy + 14)
+                    path.quadTo(gx + (if ((k + i) % 2 == 0) 1.2 else -1.2), (gy + ny) / 2, gx, ny)
+                    gy = ny; k++
+                }
+                p.strokePath(path, col, 0.9)
+            }
+            p.strokeOval(x + w * 0.28, y + h * 0.62, w * 0.45, 5.0, col, 0.9)
+        }
+    }
+
     fun shadow(p: Painter, cx: Double, cy: Double, rx: Double, ry: Double) {
         p.fillOval(cx - rx, cy - ry, rx * 2, ry * 2, Style.SHADOW)
     }

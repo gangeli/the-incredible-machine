@@ -69,7 +69,8 @@ class Mouse(placement: Placement, index: Int) : Creature(placement, index, 0.1, 
     var eating = false
     override fun think() {
         if (isCaged()) { walking = false; return }
-        val cheese = machine.parts.filterIsInstance<Cheese>().filter { !it.eaten }.minByOrNull { abs(it.center.x - pos.x) }
+        // Mort only notices cheese that is fairly close and at his level
+        val cheese = machine.parts.filterIsInstance<Cheese>().filter { !it.eaten && abs(it.center.x - pos.x) < 220 }.minByOrNull { abs(it.center.x - pos.x) }
         val cat = machine.parts.filterIsInstance<Cat>().firstOrNull { !it.caught && !it.isCaged() && abs(it.pos.x - pos.x) < 110 && abs(it.pos.y - pos.y) < 40 }
         if (cat != null) { facing = if (cat.pos.x > pos.x) -1.0 else 1.0; walking = true; return }
         if (cheese != null && abs(cheese.center.y - pos.y) < 48) {
@@ -112,7 +113,8 @@ class Mouse(placement: Placement, index: Int) : Creature(placement, index, 0.1, 
         p.strokeCircle(8.0, -2.0 + bob, 5.0, Style.OUTLINE, 1.5)
         p.fillCircle(6.0, -7.0 + bob, 3.0, Style.PINK)
         p.strokeCircle(6.0, -7.0 + bob, 3.0, Style.OUTLINE, 1.2)
-        p.fillCircle(9.5, -3.0 + bob, 1.2, Style.OUTLINE)
+        p.fillCircle(9.5, -3.2 + bob, 1.8, Style.WHITE)
+        p.fillCircle(9.8, -3.0 + bob, 1.0, Style.OUTLINE)
         p.fillCircle(13.0, -1.0 + bob, 1.5, Style.PINK)
         // feet
         p.fillOval(-6.0, 5.0, 5.0, 3.0, Style.PINK)
@@ -168,12 +170,18 @@ class Cat(placement: Placement, index: Int) : Creature(placement, index, 12.0, 5
         val earR = Path.polygon(18.0, -16.0 + bob, 22.0, -21.0 + bob, 24.0, -12.0 + bob)
         Draw.outlinedPath(p, earL, fur, 1.2); Draw.outlinedPath(p, earR, fur, 1.2)
         p.strokeCircle(16.0, -8.0 + bob, 9.0, Style.OUTLINE, 1.6)
-        val eyeOpen = startled > 0 || walking
-        if (eyeOpen) { p.fillCircle(14.0, -9.0 + bob, 1.8, Style.OUTLINE); p.fillCircle(20.0, -9.0 + bob, 1.8, Style.OUTLINE) }
-        else { p.line(12.0, -9.0 + bob, 16.0, -9.0 + bob, Style.OUTLINE, 1.4); p.line(18.0, -9.0 + bob, 22.0, -9.0 + bob, Style.OUTLINE, 1.4) }
-        p.fillCircle(21.0, -5.0 + bob, 1.5, Style.PINK)
-        p.line(22.0, -4.0 + bob, 28.0, -6.0 + bob, Style.OUTLINE, 1.0)
-        p.line(22.0, -3.0 + bob, 28.0, -2.0 + bob, Style.OUTLINE, 1.0)
+        // eyes: big and friendly, wide open when startled
+        val eyeR = if (startled > 0) 3.0 else 2.4
+        for (ex in listOf(13.5, 19.5)) {
+            p.fillCircle(ex, -9.0 + bob, eyeR, Style.WHITE)
+            p.strokeCircle(ex, -9.0 + bob, eyeR, Style.OUTLINE, 1.0)
+            p.fillCircle(ex + 0.6, -8.6 + bob, eyeR * 0.5, Style.OUTLINE)
+        }
+        p.fillCircle(21.5, -4.5 + bob, 1.4, Style.PINK)
+        val smile = Path().moveTo(19.0, -3.0 + bob).quadTo(21.5, -1.0 + bob, 24.0, -3.0 + bob)
+        p.strokePath(smile, Style.OUTLINE, 1.0)
+        p.line(23.0, -5.0 + bob, 29.0, -7.0 + bob, Style.OUTLINE, 1.0)
+        p.line(23.0, -4.0 + bob, 29.0, -3.0 + bob, Style.OUTLINE, 1.0)
         p.restore()
     }
 }

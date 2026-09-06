@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Incredible Machine for tablets</title>
+<style>
+  :root { --navy:#2B3A67; --yellow:#FFD166; --red:#E84855; --green:#5CB85C; --blue:#3D8BFD; --cream:#FFF6E5; --ink:#1E2A3A; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: linear-gradient(180deg,#8EC5FC 0%,#E0C3FC 100%) fixed; }
+  header { text-align:center; padding: 48px 16px 24px; }
+  h1 { font-size: clamp(2.2rem, 6vw, 4rem); margin: 0; line-height: 1.05; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
+  h1 .a { color: white; display:block; font-size: .45em; }
+  h1 .b { color: var(--yellow); display:block; }
+  h1 .c { color: var(--red); display:block; }
+  .tag { color: var(--navy); font-weight: 600; margin-top: 12px; }
+  main { max-width: 900px; margin: 0 auto; padding: 0 16px 64px; }
+  .card { background: var(--cream); border: 3px solid var(--ink); border-radius: 22px; padding: 24px 28px; margin: 20px 0; box-shadow: 0 6px 0 rgba(0,0,0,.25); }
+  .btn { display:inline-block; background: var(--green); color:white; font-weight:800; font-size:1.4rem; text-decoration:none; padding: 16px 32px; border-radius: 18px; border: 3px solid var(--ink); box-shadow: 0 6px 0 rgba(0,0,0,.3); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
+  .btn.alt { background: var(--blue); font-size: 1.05rem; padding: 12px 20px; }
+  ol li { margin: 10px 0; }
+  code { background: rgba(0,0,0,.08); padding: 2px 6px; border-radius: 6px; }
+  .shots { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .shots img { width:100%; border-radius: 14px; border: 3px solid var(--ink); background:white; }
+  footer { text-align:center; color: var(--navy); padding: 24px; font-size: .9rem; }
+  .small { font-size: .9rem; color: #444; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="a">The</span><span class="b">Incredible</span><span class="c">Machine</span></h1>
+  <div class="tag">A tablet remake of the classic contraption puzzle game, built for small hands.</div>
+</header>
+<main>
+  <div class="card" style="text-align:center">
+    <p><a class="btn" href="app-release.apk" download>Download the APK</a></p>
+    <p class="small">Android 7.0 or newer. The whole game is about 100 KB: no ads, no internet, no accounts.</p>
+  </div>
+
+  <div class="card">
+    <h2>How to install on an Android tablet</h2>
+    <ol>
+      <li>On the tablet, open this page in Chrome and tap <strong>Download the APK</strong>.</li>
+      <li>When the download finishes, tap the notification (or open the <em>Files</em> app and tap <code>app-release.apk</code>).</li>
+      <li>Android will say it needs permission to install apps from this source. Tap <strong>Settings</strong>, switch on <strong>Allow from this source</strong>, then go back.</li>
+      <li>Tap <strong>Install</strong>. If Play Protect asks, choose <strong>Install anyway</strong>: the app is not on the store because it is a hobby project, not because it does anything unusual.</li>
+      <li>Find <strong>Incredible Machine</strong> in the app drawer and play! Updates install over the old version and keep your progress.</li>
+    </ol>
+    <p class="small">You can switch the "allow from this source" permission off again afterwards. The APK is built and signed by the GitHub Actions workflow in the repository, so what you download is exactly what the source code produces.</p>
+  </div>
+
+  <div class="card">
+    <h2>How to play</h2>
+    <ol>
+      <li>Pick a puzzle. The goal is written at the top in one sentence, for example <em>Get the ball into the bucket</em>.</li>
+      <li>Drag parts from the tray on the right onto the playfield. Parts snap into place; a green frame means the spot is free, a red frame means it is taken.</li>
+      <li>Tap a placed part to flip it, turn it, or throw it back in the tray.</li>
+      <li>Press the big green <strong>Play</strong> button and watch. Press the red <strong>Stop</strong> button to try something else.</li>
+      <li>Stuck? The light-bulb button shows where the parts should go for a few seconds.</li>
+      <li><strong>Free play</strong> gives you every part with no goal at all.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>Screenshots</h2>
+    <div class="shots">
+      <img src="screenshots/title.png" alt="Title screen">
+      <img src="screenshots/levels.png" alt="Puzzle picker">
+      <img src="screenshots/play.png" alt="Building a machine">
+      <img src="screenshots/won.png" alt="Puzzle solved">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>About</h2>
+    <p>This is an open-source fan remake of Sierra/Dynamix's 1993 puzzle game. The parts, physics and puzzles follow the original's rules (balls, ramps, seesaws, trampolines, conveyors, fans, balloons, candles, cannons, rockets, dynamite, Mort the mouse and Pokey the cat) with new vector art, big touch targets and a one-sentence goal per puzzle so that a six-year-old can play without reading much.</p>
+    <p><a class="btn alt" href="https://github.com/gangeli/the-incredible-machine">Source code on GitHub</a></p>
+  </div>
+</main>
+<footer>MIT licensed. Not affiliated with Sierra or Dynamix.</footer>
+</body>
+</html>

@@ -219,7 +219,167 @@ object LevelData {
             goal = Goal.Activate(star)
             hint = "Ramps keep the ball rolling; the plank bridges the gap."
         },
+        level("l21", "Blow it up", "Pop the balloon") {
+            floor()
+            for (i in 0 until 5) fixed(T.WOOD_WALL, 80.0 + i * 64, 160.0)
+            fixed(T.BALLOON, 96.0, 320.0)
+            fixed(T.WOOD_WALL, 272.0, 224.0)
+            fixed(T.CANDLE, 280.0, 192.0)
+            tray(T.FAN, 1)
+            solve(T.FAN, 32.0, 176.0)
+            goal = Goal.PopAllBalloons
+            hint = "Blow the balloon along the ceiling into the candle flame."
+        },
+        level("l22", "On the moon", "Get the ball to the star") {
+            gravity = 160.0
+            floor()
+            fixed(T.BOWLING_BALL, 144.0, 200.0)
+            val star = fixed(T.STAR, 144.0, 24.0)
+            tray(T.TRAMPOLINE, 1)
+            solve(T.TRAMPOLINE, 128.0, 360.0)
+            goal = Goal.Activate(star)
+            hint = "We are on the moon: everything falls slowly and bounces high!"
+        },
+        level("l23", "Take aim", "Ring the bell") {
+            floor()
+            for (i in 0 until 3) fixed(T.WOOD_WALL, 160.0 + i * 64, 232.0)
+            fixed(T.CANDLE, 168.0, 200.0)
+            fixed(T.WOOD_WALL, 528.0, 256.0)
+            val bell = fixed(T.BELL, 536.0, 208.0)
+            tray(T.CANNON, 1)
+            solve(T.CANNON, 184.0, 192.0)
+            goal = Goal.Activate(bell)
+            hint = "The candle lights the cannon's fuse. Make sure the cannon points at the bell!"
+        },
+        level("l24", "Burn the rope", "Trap the cat under the cage") {
+            floor()
+            val hook = fixed(T.HOOK, 296.0, 0.0)
+            val cage = fixed(T.CAGE, 280.0, 120.0)
+            rope(hook, cage)
+            val cat = fixed(T.CAT, 280.0, 352.0)
+            fixed(T.WOOD_WALL, 256.0, 96.0)
+            tray(T.CANDLE, 1)
+            solve(T.CANDLE, 296.0, 64.0)
+            goal = Goal.Trapped(cat)
+            hint = "A candle flame burns through rope. Put it under the rope."
+        },
+        level("l25", "Big bang", "Get the ball to the star") {
+            floor()
+            fixed(T.DYNAMITE, 296.0, 352.0)
+            fixed(T.BASKETBALL, 336.0, 352.0)
+            val star = fixed(T.STAR, 552.0, 352.0)
+            tray(T.CANDLE, 1)
+            solve(T.CANDLE, 280.0, 352.0)
+            goal = Goal.Activate(star)
+            hint = "The explosion will throw the ball. Light the fuse!"
+        },
+        level("l26", "Rocket rescue", "Launch the rocket") {
+            floor()
+            fixed(T.CANDLE, 400.0, 352.0)
+            tray(T.ROCKET, 1)
+            solve(T.ROCKET, 416.0, 320.0)
+            goal = Goal.ActivateAll(T.ROCKET)
+            hint = "Stand the rocket right next to the candle."
+        },
+        level("l27", "Mort's ride", "Get Mort to the cheese") {
+            floor(0.0, 224.0)
+            floor(320.0, 640.0)
+            fixed(T.MOUSE, 40.0, 368.0)
+            fixed(T.CHEESE, 560.0, 368.0)
+            tray(T.CONVEYOR, 1)
+            solve(T.CONVEYOR, 224.0, 376.0)
+            goal = Goal.MouseEatsCheese
+            hint = "Bridge the gap with the conveyor. Which way should it go? Flip it!"
+        },
+        level("l28", "Ding dong", "Ring the bell") {
+            floor()
+            fixed(T.WOOD_WALL, 0.0, 168.0)
+            fixed(T.BOWLING_BALL, 8.0, 104.0)
+            fixed(T.WOOD_WALL, 224.0, 80.0)
+            val bell = fixed(T.BELL, 232.0, 96.0)
+            tray(T.INCLINE, 1)
+            tray(T.TRAMPOLINE, 1)
+            solve(T.INCLINE, 0.0, 136.0)
+            solve(T.TRAMPOLINE, 152.0, 360.0)
+            goal = Goal.Activate(bell)
+            hint = "Roll the ball off the shelf onto the trampoline; it bounces up to the bell."
+        },
+        level("l29", "Other way round", "Get the ball into the bucket") {
+            floor()
+            fixed(T.WOOD_WALL, 536.0, 200.0)
+            fixed(T.BASKETBALL, 560.0, 136.0)
+            val bucket = fixed(T.BUCKET, 416.0, 336.0)
+            tray(T.INCLINE, 1)
+            solve(T.INCLINE, 536.0, 168.0, flipped = true)
+            goal = Goal.BallInto(bucket)
+            hint = "The ramp must slope the other way. Tap it and press the flip button!"
+        },
+        level("l30", "Turn around, Mort", "Get Mort to the cheese") {
+            floor(0.0, 480.0)
+            fixed(T.MOUSE, 400.0, 368.0)
+            fixed(T.CHEESE, 40.0, 368.0)
+            tray(T.SMALL_WALL, 1)
+            solve(T.SMALL_WALL, 464.0, 352.0, rotation = 1)
+            goal = Goal.MouseEatsCheese
+            hint = "Mort walks until he bumps into something. Stand the brick up on its end to turn him around."
+            timeLimit = 20.0
+        },
+        level("l31", "Double trouble", "Get both balls into the buckets") {
+            floor()
+            fixed(T.WOOD_WALL, 40.0, 200.0)
+            fixed(T.BASKETBALL, 48.0, 136.0)
+            val b1 = fixed(T.BUCKET, 176.0, 336.0)
+            fixed(T.WOOD_WALL, 536.0, 200.0)
+            fixed(T.BASKETBALL, 560.0, 136.0)
+            val b2 = fixed(T.BUCKET, 416.0, 336.0)
+            tray(T.INCLINE, 2)
+            solve(T.INCLINE, 40.0, 168.0)
+            solve(T.INCLINE, 536.0, 168.0, flipped = true)
+            goal = Goal.All(listOf(Goal.BallInto(b1), Goal.BallInto(b2)))
+            hint = "One ramp for each ball. One of them needs flipping."
+        },
+        level("l32", "Rope trick", "Trap the cat under the cage") {
+            floor()
+            val hook = fixed(T.HOOK, 296.0, 0.0)
+            val cage = fixed(T.CAGE, 280.0, 136.0)
+            rope(hook, cage)
+            val cat = fixed(T.CAT, 280.0, 352.0)
+            fixed(T.WOOD_WALL, 208.0, 128.0)
+            tray(T.SCISSORS, 1)
+            tray(T.BASEBALL, 1)
+            solve(T.SCISSORS, 272.0, 96.0)
+            solve(T.BASEBALL, 272.0, 24.0)
+            goal = Goal.Trapped(cat)
+            hint = "Scissors on the shelf next to the rope, and a ball to land on them."
+        },
+        level("l33", "Chain reaction", "Pop the balloon") {
+            floor()
+            for (i in 0 until 5) fixed(T.WOOD_WALL, 80.0 + i * 64, 160.0)
+            fixed(T.BALLOON, 96.0, 320.0)
+            fixed(T.WOOD_WALL, 272.0, 224.0)
+            val sw = fixed(T.SWITCH, 480.0, 344.0)
+            val fan = fixed(T.FAN, 32.0, 176.0)
+            wire(sw, fan)
+            tray(T.CANDLE, 1)
+            tray(T.BASEBALL, 1)
+            solve(T.CANDLE, 280.0, 192.0)
+            solve(T.BASEBALL, 488.0, 120.0)
+            goal = Goal.PopAllBalloons
+            hint = "The ball turns on the fan, the fan blows the balloon, the candle pops it."
+        },
+        level("l34", "Slam dunk", "Get the ball through the hoop") {
+            floor()
+            fixed(T.SEESAW, 160.0, 352.0)
+            val hoop = fixed(T.HOOP, 32.0, 256.0, flipped = true)
+            tray(T.BASKETBALL, 1)
+            tray(T.BOWLING_BALL, 1)
+            solve(T.BASKETBALL, 160.0, 320.0)
+            solve(T.BOWLING_BALL, 216.0, 40.0)
+            goal = Goal.BallInto(hoop)
+            hint = "Basketball on the low end, bowling ball high above the other end."
+            timeLimit = 20.0
+        },
     )
 
-    val demo: Level = levels[0]
+    val demo: Level = levels[11]
 }

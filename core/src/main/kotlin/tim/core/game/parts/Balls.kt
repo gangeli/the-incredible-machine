@@ -62,21 +62,28 @@ open class Ball(placement: Placement, index: Int) : Part(placement, index) {
             PartType.BASKETBALL -> Draw.ball(p, c.x, c.y, r, spec.color, spec.dark, angle) { q ->
                 q.line(-r, 0.0, r, 0.0, Style.OUTLINE, 1.5)
                 q.line(0.0, -r, 0.0, r, Style.OUTLINE, 1.5)
-                val arc = Path().arcTo(-r * 1.7, -r, r * 1.4, r * 2, 300.0, 120.0)
-                q.strokePath(arc, Style.OUTLINE, 1.5)
-                val arc2 = Path().arcTo(r * 0.3, -r, r * 1.4, r * 2, 120.0, 120.0)
-                q.strokePath(arc2, Style.OUTLINE, 1.5)
+                val seamL = Path().moveTo(-r * 0.55, -r * 0.83).quadTo(-r * 1.15, 0.0, -r * 0.55, r * 0.83)
+                val seamR = Path().moveTo(r * 0.55, -r * 0.83).quadTo(r * 1.15, 0.0, r * 0.55, r * 0.83)
+                q.strokePath(seamL, Style.OUTLINE, 1.5)
+                q.strokePath(seamR, Style.OUTLINE, 1.5)
             }
             PartType.BASEBALL -> Draw.ball(p, c.x, c.y, r, spec.color, spec.dark, angle) { q ->
-                val s1 = Path().arcTo(-r * 1.6, -r * 0.9, r * 1.4, r * 1.8, 300.0, 120.0)
-                q.strokePath(s1, Style.RED, 1.4)
-                val s2 = Path().arcTo(r * 0.2, -r * 0.9, r * 1.4, r * 1.8, 120.0, 120.0)
-                q.strokePath(s2, Style.RED, 1.4)
+                val s1 = Path().moveTo(-r * 0.5, -r * 0.85).quadTo(-r * 1.0, 0.0, -r * 0.5, r * 0.85)
+                val s2 = Path().moveTo(r * 0.5, -r * 0.85).quadTo(r * 1.0, 0.0, r * 0.5, r * 0.85)
+                q.strokePath(s1, Style.RED, 1.2)
+                q.strokePath(s2, Style.RED, 1.2)
+                for (i in 0 until 4) {
+                    val t = -0.6 + i * 0.4
+                    val yy = t * r * 0.85
+                    val xx = -r * (0.5 + 0.25 * (1 - t * t))
+                    q.line(xx - 1.2, yy - 0.8, xx + 1.2, yy + 0.8, Style.RED, 0.9)
+                    q.line(-xx - 1.2, yy + 0.8, -xx + 1.2, yy - 0.8, Style.RED, 0.9)
+                }
             }
             PartType.TENNIS_BALL -> Draw.ball(p, c.x, c.y, r, spec.color, spec.dark, angle) { q ->
-                val s1 = Path().arcTo(-r * 1.5, -r * 0.8, r * 1.4, r * 1.6, 300.0, 120.0)
+                val s1 = Path().moveTo(-r * 0.45, -r * 0.88).quadTo(-r * 1.05, 0.0, -r * 0.45, r * 0.88)
+                val s2 = Path().moveTo(r * 0.45, -r * 0.88).quadTo(r * 1.05, 0.0, r * 0.45, r * 0.88)
                 q.strokePath(s1, Style.WHITE, 1.6)
-                val s2 = Path().arcTo(r * 0.1, -r * 0.8, r * 1.4, r * 1.6, 120.0, 120.0)
                 q.strokePath(s2, Style.WHITE, 1.6)
             }
             PartType.SUPER_BALL -> Draw.ball(p, c.x, c.y, r, spec.color, spec.dark, angle) { q ->

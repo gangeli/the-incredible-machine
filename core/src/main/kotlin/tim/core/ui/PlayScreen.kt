@@ -523,6 +523,16 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         return null
     }
 
+    // ---- test hooks (also handy for accessibility tooling)
+    fun visibleTiles(): List<TrayTile> = tiles.filter { it.rect.minY >= trayTilesArea().minY - 1 && it.rect.maxY <= trayTilesArea().maxY + 1 }
+    fun playButtonRect(): AABB = playButton.rect
+    /** Screen rectangle of a floating part-action button ("flip", "rotate", "delete"), if visible. */
+    fun actionButton(name: String): AABB? {
+        drawSelectionButtons(null)
+        val b = when (name) { "flip" -> flipButton; "rotate" -> rotateButton; else -> deleteButton }
+        return if (b.visible) b.rect else null
+    }
+
     override fun back(): Boolean {
         if (running) { stopRun(); return true }
         if (isFreeform) game.toTitle() else game.toLevelSelect()
@@ -658,12 +668,14 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             while (size > 14 * u && p.textWidth(title, size) > gw - 30 * u) size -= 2 * u
             p.textCentered(title, left + gw / 2, tb.center.y, size, Style.OUTLINE)
             if (!isFreeform) {
-                p.textCentered("Level ${levelIndex + 1}", left + 6 * u + 46 * u, tb.minY + tb.height - 6 * u, 14 * u, Colors.withAlpha(Style.OUTLINE, 0.5))
+                val badge = 46 * u
+                p.fillCircle(left + badge * 0.7, tb.center.y, badge * 0.45, Style.NAVY)
+                p.textCentered("${levelIndex + 1}", left + badge * 0.7, tb.center.y, badge * 0.5, Style.WHITE)
             }
         }
     }
 
-    private fun drawSelectionButtons(p: Painter) {
+    private fun drawSelectionButtons(@Suppress("UNUSED_PARAMETER") p: Painter?) {
         val u = game.u
         val show = !running && selected >= 0 && selected < board.playerParts.size && drag == null
         flipButton.visible = false; rotateButton.visible = false; deleteButton.visible = false

@@ -161,23 +161,31 @@ class Trampoline(placement: Placement, index: Int) : Part(placement, index) {
 
     override fun draw(p: Painter, t: Double) {
         val dip = wobble * 4
-        // legs
-        p.line(x + 10, y + 12, x + 4, y + h, Style.OUTLINE, 3.0)
-        p.line(x + w - 10, y + 12, x + w - 4, y + h, Style.OUTLINE, 3.0)
-        p.line(x + 10, y + 12, x + 16, y + h, Style.OUTLINE, 3.0)
-        p.line(x + w - 10, y + 12, x + w - 16, y + h, Style.OUTLINE, 3.0)
-        // frame + mat
-        p.fillRoundRect(x, y + 3, w, 10.0, 5.0, Style.STEEL_LIGHT)
-        val matPath = Path()
-        matPath.moveTo(x + 6, y + 8); matPath.quadTo(x + w / 2, y + 8 + dip * 2, x + w - 6, y + 8)
-        p.strokePath(matPath, Style.OUTLINE, 3.0)
-        p.strokePath(matPath, Style.BLUE, 1.5)
-        p.strokeRoundRect(x, y + 3, w, 10.0, 5.0, Style.OUTLINE, Style.LINE)
-        // springs
-        for (i in 0 until 4) {
-            val sx = x + 8 + i * (w - 16) / 3
-            p.line(sx, y + 4, sx, y + 12, Colors.withAlpha(Style.OUTLINE, 0.4), 1.0)
+        // legs: two splayed pairs
+        for (lx in listOf(x + 12, x + w - 12)) {
+            p.line(lx, y + 12, lx - 8, y + h, Style.OUTLINE, 4.0)
+            p.line(lx, y + 12, lx + 8, y + h, Style.OUTLINE, 4.0)
+            p.line(lx, y + 12, lx - 8, y + h, Style.STEEL, 2.0)
+            p.line(lx, y + 12, lx + 8, y + h, Style.STEEL, 2.0)
         }
+        // frame
+        p.fillRoundRect(x, y + 2, w, 12.0, 6.0, Style.GREY_DARK)
+        // springs
+        for (side in listOf(-1.0, 1.0)) {
+            val sx0 = if (side < 0) x + 4 else x + w - 4
+            val sx1 = if (side < 0) x + 12 else x + w - 12
+            val zig = Path().moveTo(sx0, y + 8)
+            for (k in 1..4) zig.lineTo(sx0 + (sx1 - sx0) * k / 4, y + 8 + (if (k % 2 == 1) -2.5 else 2.5))
+            p.strokePath(zig, Style.STEEL_LIGHT, 1.2)
+        }
+        // mat (sags a little when hit)
+        val mat = Path()
+        mat.moveTo(x + 12, y + 5); mat.lineTo(x + w - 12, y + 5)
+        mat.quadTo(x + w / 2, y + 11 + dip, x + 12, y + 11)
+        mat.close()
+        p.fillPath(mat, Style.BLUE)
+        p.line(x + 14, y + 6.5, x + w - 14, y + 6.5, Colors.withAlpha(Style.WHITE, 0.45), 1.2)
+        p.strokeRoundRect(x, y + 2, w, 12.0, 6.0, Style.OUTLINE, Style.LINE)
     }
 }
 
@@ -522,6 +530,7 @@ class Cannon(placement: Placement, index: Int) : Part(placement, index), Activat
         // barrel
         val barrel = Path.polygon(rx + 4, y + 14, rx + w - 2, y + 10, rx + w - 2, y + 34, rx + 4, y + 30)
         p.fillPath(barrel, Style.GREY_DARK)
+        p.line(rx + 8, y + 17, rx + w - 10, y + 14, Colors.withAlpha(Style.WHITE, 0.25), 2.5)
         p.strokePath(barrel, Style.OUTLINE, Style.LINE)
         p.fillRoundRect(rx + w - 8, y + 8, 6.0, 28.0, 2.0, Style.GREY_DARK)
         p.strokeRoundRect(rx + w - 8, y + 8, 6.0, 28.0, 2.0, Style.OUTLINE, Style.LINE)
@@ -579,10 +588,14 @@ class Dynamite(placement: Placement, index: Int) : Part(placement, index), Activ
         val by = c.y - 10
         for (i in 0 until 3) {
             val sx = bx + i * 9
-            Draw.outlinedRoundRect(p, sx, by, 9.0, 20.0, 2.0, Style.RED)
+            p.fillRoundRect(sx, by, 9.0, 20.0, 2.5, Style.RED)
+            p.fillRect(sx + 1, by + 6, 7.0, 2.2, Style.RED_DARK)
+            p.fillRect(sx + 1, by + 13, 7.0, 2.2, Style.RED_DARK)
+            p.fillRect(sx + 2, by + 2, 1.5, 16.0, Colors.withAlpha(Style.WHITE, 0.25))
+            p.strokeRoundRect(sx, by, 9.0, 20.0, 2.5, Style.OUTLINE, 1.6)
         }
-        p.fillRect(bx, by + 7, 27.0, 3.0, Style.OUTLINE)
-        p.fillRect(bx, by + 14, 27.0, 3.0, Style.OUTLINE)
+        p.fillRoundRect(bx - 1, by + 8, 29.0, 4.0, 1.0, Style.GREY_DARK)
+        p.strokeRoundRect(bx - 1, by + 8, 29.0, 4.0, 1.0, Style.OUTLINE, 1.0)
         // fuse
         val fz = Path(); fz.moveTo(c.x, by); fz.quadTo(c.x + 4, by - 8, c.x, by - 12)
         p.strokePath(fz, Style.OUTLINE, 2.0)
@@ -766,11 +779,17 @@ class BoxingGlove(placement: Placement, index: Int) : Part(placement, index) {
             spring.lineTo(fx, y + 20)
         }
         p.strokePath(spring, Style.OUTLINE, 2.0)
-        // fist (glove)
+        // fist (glove): cuff, palm, thumb
         val fx = x + 34 + ext
-        Draw.outlinedRoundRect(p, fx, y + 8, 28.0, 24.0, 9.0, Style.RED)
-        p.fillRoundRect(fx + 2, y + 22, 12.0, 8.0, 3.0, Style.RED_DARK)
-        p.fillOval(fx + 8, y + 12, 8.0, 5.0, Colors.withAlpha(Style.WHITE, 0.4))
+        Draw.outlinedRoundRect(p, fx, y + 10, 9.0, 20.0, 2.5, Style.RED_DARK)
+        p.fillRoundRect(fx + 6, y + 8, 24.0, 24.0, 10.0, Style.RED)
+        p.fillCircle(fx + 13, y + 11, 5.0, Style.RED)
+        p.strokeCircle(fx + 13, y + 11, 5.0, Style.OUTLINE, 1.4)
+        p.fillRoundRect(fx + 6, y + 8, 24.0, 24.0, 10.0, Style.RED)
+        p.line(fx + 16, y + 22, fx + 24, y + 22, Style.RED_DARK, 1.4)
+        p.line(fx + 16, y + 26, fx + 23, y + 26, Style.RED_DARK, 1.4)
+        p.gradientCircle(fx + 20, y + 15, 6.0, 0x99FFFFFF.toInt(), 0x00FFFFFF, 0.0, 0.0)
+        p.strokeRoundRect(fx + 6, y + 8, 24.0, 24.0, 10.0, Style.OUTLINE, Style.LINE)
         p.restore()
     }
 }
@@ -856,17 +875,32 @@ class Bellows(placement: Placement, index: Int) : Part(placement, index) {
     override fun draw(p: Painter, t: Double) {
         p.save()
         if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
-        val sq = squeeze * 6
-        // bag
+        val sq = squeeze * 5
+        val hingeX = x + w - 22           // where the boards meet the nozzle
+        val midY = y + h / 2
+        // pleated leather bag between the boards
         val bag = Path()
-        bag.moveTo(x + 4, y + 8 + sq); bag.lineTo(x + w - 20, y + 4 + sq); bag.lineTo(x + w - 18, y + 22); bag.lineTo(x + w - 20, y + h); bag.lineTo(x + 4, y + h); bag.close()
+        bag.moveTo(x + 4, y + 8 + sq); bag.lineTo(hingeX, midY - 5); bag.lineTo(hingeX, midY + 5); bag.lineTo(x + 4, y + h - 8 - sq); bag.close()
         Draw.outlinedPath(p, bag, Style.BROWN)
-        p.line(x + 8, y + 16 + sq / 2, x + w - 22, y + 14 + sq / 2, Style.BROWN_DARK, 1.5)
+        val pleat = Colors.withAlpha(Style.BROWN_DARK, 0.7)
+        for (i in 1..3) {
+            val f = i / 4.0
+            val px = x + 4 + (hingeX - x - 4) * f
+            val top = (y + 8 + sq) + ((midY - 5) - (y + 8 + sq)) * f
+            val bot = (y + h - 8 - sq) + ((midY + 5) - (y + h - 8 - sq)) * f
+            p.line(px, top, px, bot, pleat, 1.3)
+        }
+        // wooden boards, hinged at the nozzle end
+        val top = Path.polygon(x + 2, y + 2 + sq, hingeX, midY - 7, hingeX, midY - 3, x + 2, y + 8 + sq)
+        val bottom = Path.polygon(x + 2, y + h - 8 - sq, hingeX, midY + 3, hingeX, midY + 7, x + 2, y + h - 2 - sq)
+        Draw.outlinedPath(p, top, Style.WOOD)
+        Draw.outlinedPath(p, bottom, Style.WOOD)
         // handles
-        Draw.outlinedRoundRect(p, x + 2, y + 2 + sq, w - 24, 6.0, 3.0, Style.WOOD)
-        Draw.outlinedRoundRect(p, x + 2, y + h - 6, w - 24, 6.0, 3.0, Style.WOOD)
+        Draw.outlinedRoundRect(p, x, y + sq - 2, 14.0, 6.0, 3.0, Style.WOOD_DARK, 1.4)
+        Draw.outlinedRoundRect(p, x, y + h - 4 - sq, 14.0, 6.0, 3.0, Style.WOOD_DARK, 1.4)
         // nozzle
-        Draw.outlinedRoundRect(p, x + w - 20, y + 15, 20.0, 10.0, 3.0, Style.STEEL)
+        Draw.outlinedRoundRect(p, hingeX, midY - 5, 22.0, 10.0, 3.0, Style.STEEL)
+        p.fillRect(hingeX + 18, midY - 3, 3.0, 6.0, Style.GREY_DARK)
         p.restore()
     }
 }
@@ -913,6 +947,7 @@ class Motor(placement: Placement, index: Int) : Part(placement, index) {
         p.save(); p.translate(hub.x, hub.y); p.rotate(sp)
         p.line(-6.0, 0.0, 6.0, 0.0, Style.OUTLINE, 2.0); p.line(0.0, -6.0, 0.0, 6.0, Style.OUTLINE, 2.0)
         p.restore()
-        if (!powered) { p.fillCircle(x + 10, y + 4, 3.0, Style.GREY) } else { p.fillCircle(x + 10, y + 4, 3.0, Style.GREEN) }
+        p.fillCircle(x + 11, y + 15, 3.0, if (powered) Style.GREEN else Style.GREY)
+        p.strokeCircle(x + 11, y + 15, 3.0, Style.OUTLINE, 1.2)
     }
 }
