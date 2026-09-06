@@ -7,7 +7,7 @@ How the game was tested without a device (this project was built in a container 
 * **Solution replay** (`LevelsTest`): every level's stored solution is placed on the board and the
   machine is run; the goal must trigger within the level's time limit. The same test proves the
   untouched board never solves itself (so every puzzle needs the child to do something) and that
-  solutions only use parts from the tray, sit on the 8-unit grid and do not overlap.
+  solutions only use parts from the tray, sit on the 4-unit placement grid and do not overlap.
 * **Touch-driven playthrough** (`PlaytestTest`): for every level the test presses the tray tile,
   drags it across the tray edge onto the field with the same lift-above-finger offset a child
   experiences, uses the floating flip/rotate buttons where the solution needs them, presses the big
@@ -25,13 +25,14 @@ How the game was tested without a device (this project was built in a container 
 ## Design decisions for a six-year-old
 
 * One sentence of text per puzzle, plus a picture of the goal part on the level tile.
-* Parts snap to a coarse grid and a drop that would overlap something slides to the nearest free
-  spot instead of failing; dropping on the tray throws the part back.
+* Parts snap to a fine 4-unit grid (160 x 100 positions on the field) so placement is precise but
+  still tidy; a drop that would overlap something slides to the nearest free spot within 24 units
+  instead of failing; dropping on the tray throws the part back.
 * The dragged part floats 48 units above the finger so it is never hidden by the hand.
 * Tapping a tray tile (instead of dragging) also places the part, in a free spot near the tray.
 * A giant Play button in the tray column turns into a red Stop button while the machine runs.
-* After 7 idle seconds on an untouched board the hint ghost appears with a big bouncing arrow from
-  the tray to the right spot (twice at most). The light-bulb button shows the same hint on demand;
+* On the first three puzzles only: after 7 idle seconds on an untouched board the hint ghost appears
+  with a big bouncing arrow from the tray to the right spot (twice at most). The light-bulb button shows the same hint on demand;
   using it costs one star.
 * Failure is gentle: "Hmm, not yet! Let's try again" and the board is kept exactly as built.
 * Success is loud: confetti, a fanfare, stars, and a Next button.

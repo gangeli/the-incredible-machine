@@ -29,7 +29,8 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
     companion object {
         const val WIDTH = 640.0
         const val HEIGHT = 400.0
-        const val GRID = 8.0
+        /** Placement snaps to this many world units: fine enough that positions are not degenerate, coarse enough to help alignment. */
+        const val GRID = 4.0
     }
 
     val world = World(Vec2(0.0, gravity), width, height).also { it.airPressure = airPressure }

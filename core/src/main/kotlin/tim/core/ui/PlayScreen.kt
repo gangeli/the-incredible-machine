@@ -62,7 +62,10 @@ private class Drag(
  * the goal sentence.
  */
 class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(game) {
+    companion object { const val TUTORIAL_LEVELS = 3 }
     val isFreeform = levelIndex < 0
+    /** The first few puzzles act as a tutorial: an idle child gets shown where the first part goes. */
+    val isTutorial = levelIndex in 0 until TUTORIAL_LEVELS
     var board: Board = level.newBoard()
         private set
     private val history = ArrayList<List<Placement>>()
@@ -233,7 +236,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     private fun findSpot(pl: Placement, ignoreIndex: Int): Placement? {
         if (fits(pl, ignoreIndex)) return pl
         val g = Machine.GRID
-        for (ring in 1..3) {
+        val maxRing = (24.0 / g).toInt()
+        for (ring in 1..maxRing) {
             var best: Placement? = null
             var bestD = Double.MAX_VALUE
             for (dy in -ring..ring) for (dx in -ring..ring) {
@@ -330,7 +334,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             playButton.attention = if (board.playerParts.isNotEmpty() || isFreeform) 1.0 else 0.0
             idleTime += dt
             // Nobody has placed anything for a while: show where the first part goes (twice at most).
-            if (!isFreeform && board.playerParts.isEmpty() && drag == null && idleTime > 7.0 && nudges < 2 && hintUntil < game.clock) {
+            if (isTutorial && board.playerParts.isEmpty() && drag == null && idleTime > 7.0 && nudges < 2 && hintUntil < game.clock) {
                 hintUntil = game.clock + 5.0
                 nudges++
                 idleTime = 0.0
@@ -538,6 +542,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     // ---- test hooks (also handy for accessibility tooling)
     fun visibleTiles(): List<TrayTile> = tiles.filter { it.rect.minY >= trayTilesArea().minY - 1 && it.rect.maxY <= trayTilesArea().maxY + 1 }
     fun playButtonRect(): AABB = playButton.rect
+    val hintShowing: Boolean get() = hintUntil > game.clock
     /** Screen rectangle of a floating part-action button ("flip", "rotate", "delete"), if visible. */
     fun actionButton(name: String): AABB? {
         drawSelectionButtons(null)
@@ -585,8 +590,9 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         p.save()
         p.translate(f.minX, f.minY); p.scale(layout.scale, layout.scale)
         val dot = Colors.withAlpha(Style.OUTLINE, 0.08)
-        var gy = Machine.GRID * 4
-        while (gy < Machine.HEIGHT) { var gx = Machine.GRID * 4; while (gx < Machine.WIDTH) { p.fillCircle(gx, gy, 1.2, dot); gx += Machine.GRID * 4 }; gy += Machine.GRID * 4 }
+        val dotStep = 32.0
+        var gy = dotStep
+        while (gy < Machine.HEIGHT) { var gx = dotStep; while (gx < Machine.WIDTH) { p.fillCircle(gx, gy, 1.2, dot); gx += dotStep }; gy += dotStep }
         val m = machine
         if (m != null) {
             m.draw(p, m.time)
