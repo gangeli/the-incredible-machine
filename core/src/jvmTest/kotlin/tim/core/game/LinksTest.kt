@@ -107,5 +107,16 @@ class LinksTest {
         }
         m.run(0.8)
         assertTrue(m.part<Ball>(9).pos.x < 280, "ball should be carried left by the motor's direction, x=${m.part<Ball>(9).pos.x}")
+        // flipping the conveyor reverses it again
+        val m2 = machine {
+            floor(this)
+            val motor = part(PartType.MOTOR, 100.0, 344.0, flipped = true)
+            val conv = part(PartType.CONVEYOR, 240.0, 300.0, flipped = true)
+            belt(motor, conv)
+            part(PartType.BOWLING_BALL, 272.0, 260.0)
+            part(PartType.OUTLET, 76.0, 352.0)
+        }
+        m2.run(0.8)
+        assertTrue(m2.part<Ball>(9).pos.x > 300, "a flipped conveyor on a flipped motor runs right again, x=${m2.part<Ball>(9).pos.x}")
     }
 }

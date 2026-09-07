@@ -466,7 +466,7 @@ object LevelData {
             // a stalled conveyor holds a heavy ball above the bucket; its motor is waiting for power
             val belt = fixed(T.CONVEYOR, 472.0, 160.0, flipped = true)
             fixed(T.BOWLING_BALL, 520.0, 128.0)
-            val motor = fixed(T.MOTOR, 552.0, 120.0, flipped = true)
+            val motor = fixed(T.MOTOR, 552.0, 120.0)
             belt(motor, belt)
             val sw = fixed(T.SWITCH, 612.0, 344.0)
             tray(T.BASEBALL, 1)
@@ -523,7 +523,7 @@ object LevelData {
             val motor = solve(T.MOTOR, 160.0, 216.0)
             solveBelt(motor, belt)
             goal = Goal.BallInto(bucket)
-            hint = "Put the motor next to the plug and tie the belt. The belt runs the way the motor faces: tap the motor to flip it."
+            hint = "Put the motor next to the plug and tie the belt. Going the wrong way? Tap the motor or the conveyor and flip it."
         },
         level("l38", "Wire it", "Get the ball to the star") {
             floor()

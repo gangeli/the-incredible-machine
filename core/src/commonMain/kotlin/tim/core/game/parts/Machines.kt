@@ -254,8 +254,8 @@ class Conveyor(placement: Placement, index: Int) : Part(placement, index) {
     }
     private var phase = 0.0
     val running: Boolean get() = powered && beltRunning
-    /** The belt turns the way the motor faces. */
-    val direction: Double get() = if (belted) beltDir.toDouble() else dir
+    /** The belt turns the way the motor faces; flipping the conveyor itself reverses it too. */
+    val direction: Double get() = if (belted) beltDir * dir else dir
 
     override fun build(world: World) {
         body = Body(PolygonShape.rect(x, y + 4, x + w, y + h - 4), Vec2.ZERO, BodyKind.STATIC, restitution = 0.1, friction = 0.9, owner = this, tag = "conveyor")
