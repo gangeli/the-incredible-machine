@@ -101,6 +101,31 @@ class UiFixesTest {
     }
 
     @Test
+    fun `tapping empty space around a part many times never deletes it`() {
+        val g = newGame()
+        g.startFreeform(fresh = true); g.update(0.02)
+        val ps = g.screen as PlayScreen
+        val type = ps.visibleTiles().first().type
+        val target = ps.layout.toScreen(Vec2(300.0, 260.0))
+        dragTile(g, ps, type, Vec2(target.x - 200, target.y), target)
+        assertEquals(1, ps.board.playerParts.size)
+        val part = ps.board.playerParts[0]
+        // taps all around the part, on empty field, in quick succession (a child poking the screen)
+        val spots = listOf(Vec2(part.x + part.w / 2, part.y - 6.0), Vec2(part.x - 6.0, part.y + part.h / 2), Vec2(part.x + part.w + 6.0, part.y - 20.0),
+            Vec2(part.x + part.w / 2, part.y - 40.0), Vec2(part.x - 30.0, part.y - 30.0), Vec2(part.x + part.w + 30.0, part.y - 30.0))
+        val painter = Java2DPainter.create(g.width.toInt(), g.height.toInt())
+        repeat(6) { round ->
+            for (wp in spots) {
+                val sp = ps.layout.toScreen(wp)
+                g.render(painter)   // like the real game: the selection buttons get placed by rendering
+                press(g, sp.x, sp.y); g.render(painter); release(g, sp.x, sp.y)
+                g.update(0.05); g.render(painter)
+                assertEquals(1, ps.board.playerParts.size, "part vanished after tapping $wp in round $round")
+            }
+        }
+    }
+
+    @Test
     fun `in free play a vertical pull scrolls the tray and a sideways pull drags`() {
         val g = newGame()
         g.startFreeform(); g.update(0.02)

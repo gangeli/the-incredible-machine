@@ -665,6 +665,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
     }
 
     private var pressedButton: Button? = null
+    private var actionGuardUntil = 0.0
 
     private fun onDown(x: Double, y: Double) {
         idleTime = 0.0
@@ -676,7 +677,10 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
             if (pressedButton == null && !clearPanel().contains(Vec2(x, y))) { confirmClear = false; game.play("tap") }
             return
         }
-        pressedButton = buttons.lastOrNull { it.hit(x, y) }
+        // the flip/turn/bin buttons pop up right next to a part when it is tapped; give a poking finger a
+        // moment before they accept taps, so a second poke on the same spot cannot bin the part
+        val guarded = game.clock < actionGuardUntil
+        pressedButton = buttons.lastOrNull { it.hit(x, y) && !(guarded && (it === flipButton || it === rotateButton || it === deleteButton || it === unlinkButton)) }
         pressedButton?.let { it.pressed = true; return }
         if (running) return
         // tray tabs
@@ -713,7 +717,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
     private fun hitPlayerPart(w: Vec2): Int {
         var best = -1; var bestD = Double.MAX_VALUE
         board.playerParts.forEachIndexed { i, p ->
-            val slop = 10.0
+            // taps have to land on the part; only tiny parts (pulleys, hooks) get extra slack
+            val slop = if (minOf(p.w, p.h) < 24) 8.0 else 2.0
             if (p.aabb.expanded(slop).contains(w)) {
                 val d = (p.aabb.center - w).lengthSq
                 if (d < bestD) { bestD = d; best = i }
@@ -803,6 +808,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
             }
             if (!touchMoved && d.existing >= 0) {
                 selected = d.existing
+                actionGuardUntil = game.clock + 0.35
                 game.play("tap")
                 return
             }
