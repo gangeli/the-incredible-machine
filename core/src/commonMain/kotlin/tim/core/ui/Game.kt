@@ -59,6 +59,11 @@ class Game(val storage: Storage, val sound: SoundPlayer = SoundPlayer {}) {
      */
     var installAction: (() -> Unit)? = null
     var installAttention = false
+    /**
+     * Platform text entry (a dialog or the browser's prompt): asks for a line of text and calls back
+     * with it, or with null when cancelled. Renaming saved machines is only offered when this is set.
+     */
+    var textInput: ((title: String, current: String, done: (String?) -> Unit) -> Unit)? = null
     var width = 1280.0
         private set
     var height = 800.0

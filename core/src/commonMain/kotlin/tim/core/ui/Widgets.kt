@@ -171,6 +171,14 @@ object Icons {
         outlined(p, Path.roundRect(-22.0, -14.0, 44.0, 10.0, 3.0))
         p.save(); p.translate(0.0, 6.0); p.scale(0.42, 0.42); star(p, 0.0, 0.0, 48.0); p.restore()
     }
+    /** Pencil: rename. */
+    fun pencil(p: Painter, x: Double, y: Double, s: Double) {
+        p.save(); p.rotate(0.785)
+        outlined(p, Path.polygon(-4.0, -20.0, 4.0, -20.0, 4.0, 10.0, 0.0, 18.0, -4.0, 10.0))
+        p.fillRect(-4.0, -20.0, 8.0, 6.0, Style.YELLOW); p.strokeRect(-4.0, -20.0, 8.0, 6.0, Style.OUTLINE, 1.5)
+        p.line(-4.0, 10.0, 4.0, 10.0, Style.OUTLINE, 1.5)
+        p.restore()
+    }
     fun plus(p: Painter, x: Double, y: Double, s: Double) {
         p.line(-16.0, 0.0, 16.0, 0.0, Style.OUTLINE, 12.0); p.line(0.0, -16.0, 0.0, 16.0, Style.OUTLINE, 12.0)
         p.line(-16.0, 0.0, 16.0, 0.0, W, 6.0); p.line(0.0, -16.0, 0.0, 16.0, W, 6.0)

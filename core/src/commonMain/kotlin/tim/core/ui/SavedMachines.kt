@@ -36,6 +36,8 @@ class SavedMachines(private val storage: Storage) {
         return useId
     }
 
+    fun rename(id: Int, name: String) { if (name.isNotBlank()) storage.put("machines:$id:name", name.trim().take(24)) }
+
     fun delete(id: Int) {
         storage.put("machines:$id", "")
         writeIds(ids().filter { it != id })

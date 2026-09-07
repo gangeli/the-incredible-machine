@@ -15,6 +15,7 @@ import kotlin.math.abs
 class MachinesScreen(game: Game) : Screen(game) {
     private class Tile(val id: Int?, val name: String, val rect: AABB, val preview: Machine?) {
         lateinit var trash: AABB
+        lateinit var pencil: AABB
     }
     private val tiles = ArrayList<Tile>()
     private lateinit var backButton: Button
@@ -57,11 +58,21 @@ class MachinesScreen(game: Game) : Screen(game) {
             val preview = encoded?.let { Machine(BoardCodec.decode(it, free.fixed, free.fixedLinks)) }
             val t = Tile(id, name, rect, preview)
             t.trash = AABB(rect.maxX - 52 * u, rect.minY + 8 * u, rect.maxX - 8 * u, rect.minY + 52 * u)
+            t.pencil = AABB(rect.minX + 8 * u, rect.minY + 8 * u, rect.minX + 52 * u, rect.minY + 52 * u)
             tiles.add(t)
         }
         val rows = (all.size + cols - 1) / cols
         maxScroll = maxOf(0.0, top + rows * (th + gap) + 30 * u - game.height)
         scroll = scroll.coerceIn(0.0, maxScroll)
+    }
+
+    private fun rename(t: Tile) {
+        val ask = game.textInput ?: return
+        val id = t.id ?: return
+        game.play("tap")
+        ask("Name your machine", t.name) { text ->
+            if (!text.isNullOrBlank()) { game.machines.rename(id, text); game.play("drop"); rebuild() }
+        }
     }
 
     private fun deleteConfirmed() {
@@ -101,6 +112,13 @@ class MachinesScreen(game: Game) : Screen(game) {
                 p.fillCircle(tr.center.x, tr.center.y, tr.width / 2, Style.RED)
                 p.strokeCircle(tr.center.x, tr.center.y, tr.width / 2, Style.OUTLINE, 2 * u)
                 p.save(); p.translate(tr.center.x, tr.center.y); p.scale(tr.width / 48.0 * 0.55, tr.width / 48.0 * 0.55); Icons.trash(p, 0.0, 0.0, 48.0); p.restore()
+                // rename button, only where the platform can ask for text
+                if (game.textInput != null) {
+                    val pr2 = AABB(t.pencil.minX, t.pencil.minY - scroll + pr, t.pencil.maxX, t.pencil.maxY - scroll + pr)
+                    p.fillCircle(pr2.center.x, pr2.center.y, pr2.width / 2, Style.BLUE)
+                    p.strokeCircle(pr2.center.x, pr2.center.y, pr2.width / 2, Style.OUTLINE, 2 * u)
+                    p.save(); p.translate(pr2.center.x, pr2.center.y); p.scale(pr2.width / 48.0 * 0.55, pr2.width / 48.0 * 0.55); Icons.pencil(p, 0.0, 0.0, 48.0); p.restore()
+                }
             } else {
                 p.save(); p.translate(pic.center.x, pic.center.y); p.scale(pic.height / 48.0 * 0.5, pic.height / 48.0 * 0.5); Icons.plus(p, 0.0, 0.0, 48.0); p.restore()
             }
@@ -150,6 +168,8 @@ class MachinesScreen(game: Game) : Screen(game) {
                 if (t == null || moved) return
                 val trash = AABB(t.trash.minX, t.trash.minY - scroll, t.trash.maxX, t.trash.maxY - scroll).expanded(6 * u)
                 if (t.id != null && trash.contains(Vec2(ev.x, ev.y))) { confirmDelete = t; game.play("tap"); return }
+                val pencil = AABB(t.pencil.minX, t.pencil.minY - scroll, t.pencil.maxX, t.pencil.maxY - scroll).expanded(6 * u)
+                if (t.id != null && pencil.contains(Vec2(ev.x, ev.y))) { rename(t); return }
                 game.play("tap")
                 if (t.id == null) game.startFreeform(fresh = true) else game.startFreeform(savedId = t.id)
             }
@@ -160,6 +180,8 @@ class MachinesScreen(game: Game) : Screen(game) {
     /** Test hooks. */
     fun tileRects(): List<Pair<Int?, AABB>> = tiles.map { it.id to AABB(it.rect.minX, it.rect.minY - scroll, it.rect.maxX, it.rect.maxY - scroll) }
     fun trashRect(id: Int): AABB? = tiles.firstOrNull { it.id == id }?.let { AABB(it.trash.minX, it.trash.minY - scroll, it.trash.maxX, it.trash.maxY - scroll) }
+    fun renameRect(id: Int): AABB? = tiles.firstOrNull { it.id == id }?.let { AABB(it.pencil.minX, it.pencil.minY - scroll, it.pencil.maxX, it.pencil.maxY - scroll) }
+    fun tileName(id: Int): String? = tiles.firstOrNull { it.id == id }?.name
     val confirming: Boolean get() = confirmDelete != null
     fun confirmButtons(): Pair<AABB, AABB> = yesButton.rect to noButton.rect
 

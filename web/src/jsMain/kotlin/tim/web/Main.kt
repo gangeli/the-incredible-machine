@@ -83,6 +83,7 @@ private fun start() {
     }
     document.getElementById("loading")?.let { it.parentNode?.removeChild(it) }
     setupInstall(game)
+    game.textInput = { title, current, done -> done(window.prompt(title, current)) }
     window.asDynamic().timDebug = debugHooks(game)
 }
 

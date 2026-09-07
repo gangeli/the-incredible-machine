@@ -162,6 +162,24 @@ class PartsBehaviourTest {
     }
 
     @Test
+    fun `a rocket under the low end of a seesaw flips it and flings what sat there`() {
+        // a seesaw up in the air, right end down (flipped), a rocket straight under that end
+        val f = machine {
+            floor(this)
+            part(PartType.SEESAW, 200.0, 200.0, flipped = true)   // 7
+            part(PartType.BASEBALL, 264.0, 188.0)                 // 8: on the low end
+            part(PartType.ROCKET, 264.0, 300.0)                   // 9: under the low end
+            part(PartType.CANDLE, 248.0, 332.0)                   // 10: drops beside the rocket and lights it
+        }
+        val ball = f.part<Ball>(8)
+        val rocket = f.part<tim.core.game.parts.Rocket>(9)
+        f.runUntil(6.0) { rocket.launched }
+        assertTrue(rocket.launched, "candle should light the rocket")
+        val flung = f.runUntil(4.0) { ball.pos.y < 120.0 }
+        assertTrue(flung, "the low end should flip up and fling the ball, y=${ball.pos.y}")
+    }
+
+    @Test
     fun `an upside-down ramp slides a rising balloon sideways`() {
         // rotation 2: the solid corner is top-right, the slope runs from top-left down to bottom-right
         val m = machine { part(PartType.INCLINE, 200.0, 100.0, rotation = 2); part(PartType.BALLOON, 240.0, 300.0) }

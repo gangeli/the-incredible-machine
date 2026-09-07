@@ -25,10 +25,28 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         game = Game(PrefsStorage(this), sound)
+        game.textInput = { title, current, done -> askText(title, current, done) }
         view = GameView(this, game)
         setContentView(view)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemBars()
+    }
+
+    /** A plain dialog with one text box, used to name saved machines. */
+    private fun askText(title: String, current: String, done: (String?) -> Unit) {
+        val input = android.widget.EditText(this).apply {
+            setText(current); setSelection(current.length); isSingleLine = true
+            filters = arrayOf(android.text.InputFilter.LengthFilter(24))
+        }
+        var answered = false
+        android.app.AlertDialog.Builder(this)
+            .setTitle(title)
+            .setView(input)
+            .setPositiveButton(android.R.string.ok) { _, _ -> answered = true; done(input.text.toString()) }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> answered = true; done(null) }
+            .setOnDismissListener { if (!answered) done(null); hideSystemBars() }
+            .show()
+        input.requestFocus()
     }
 
     private fun hideSystemBars() {

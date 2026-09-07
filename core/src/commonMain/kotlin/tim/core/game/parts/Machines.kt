@@ -92,10 +92,15 @@ class Seesaw(placement: Placement, index: Int) : Part(placement, index) {
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
         if (!isPlankSurface(self) || !other.isDynamic || tipping) return
         val n = ev.normalFrom(self)
-        if (n.y > -0.3) return // must land on top of the plank
         val rel = ev.point.x - pivot.x
         if (abs(rel) < 6) return // dead zone over the fulcrum
         val side = if (rel < 0) -1 else 1
+        if (n.y > 0.3) {
+            // something heavy shoving the underside upwards (a rocket, a thrown ball) lifts that end
+            if (other.mass >= 2.0 && ev.relativeSpeed > 40 && side == tilt) startTip(-side)
+            return
+        }
+        if (n.y > -0.3) return // must land on top of the plank
         if (side == tilt) return // already down on that side
         // the high end only goes down if what lands there outweighs what rests on the low end
         val landing = other.mass + loadOn(side, other)

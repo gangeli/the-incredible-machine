@@ -103,4 +103,37 @@ class SavedMachinesTest {
         assertTrue(g.machines.list().isEmpty(), "bin it removes the machine")
         assertEquals(1, gallery3.tileRects().size)
     }
+
+    @Test
+    fun `machines can be renamed through the platform's text entry`() {
+        val g = newGame()
+        var asked: String? = null
+        g.textInput = { title, current, done -> asked = "$title|$current"; done("Cheese Cannon") }
+        g.startFreeform(fresh = true); g.update(0.02)
+        var ps = g.screen as PlayScreen
+        place(g, ps, 200.0, 200.0)
+        tap(g, ps.topBarButtonRect("save").center.x, ps.topBarButtonRect("save").center.y)
+        val id = g.machines.list()[0].id
+        tap(g, ps.topBarButtonRect("machines").center.x, ps.topBarButtonRect("machines").center.y)
+        val gallery = g.screen as MachinesScreen
+        val pencil = gallery.renameRect(id) ?: error("rename button")
+        tap(g, pencil.center.x, pencil.center.y)
+        assertEquals("Name your machine|Machine $id", asked)
+        assertEquals("Cheese Cannon", gallery.tileName(id))
+        assertEquals("Cheese Cannon", g.machines.nameOf(id))
+        shot(g, "screen-machines-renamed")
+        // the free-play banner shows the name once the machine is opened
+        val tile = gallery.tileRects().first { it.first == id }.second
+        tap(g, tile.center.x, tile.center.y)
+        ps = g.screen as PlayScreen
+        assertEquals(id, ps.savedId)
+        // cancelling keeps the old name, and blank answers are ignored
+        g.textInput = { _, _, done -> done(null) }
+        g.machines.rename(id, "  ")
+        assertEquals("Cheese Cannon", g.machines.nameOf(id), "blank names are ignored")
+        // no rename button without a platform hook
+        g.textInput = null
+        g.toMachines(); g.update(0.02)
+        assertNotNull((g.screen as MachinesScreen).renameRect(id), "the rect exists but is not drawn or active")
+    }
 }
