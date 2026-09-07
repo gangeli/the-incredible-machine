@@ -242,25 +242,27 @@ class Trampoline(placement: Placement, index: Int) : Part(placement, index) {
 class Conveyor(placement: Placement, index: Int) : Part(placement, index) {
     companion object { const val SPEED = 200.0 }
     lateinit var body: Body
-    private var beltDriven = placement.needsPower
+    /** A belt from a motor has been tied to this conveyor (the motor may still be off). */
+    var belted = false
+        private set
     private var beltRunning = false
     private var beltDir = 1
     init {
-        // for a conveyor "needs power" means "needs a belt from a motor"; electricity is only relevant when wired
+        // like the original, a conveyor has no motor of its own: it only moves when a belt from a running motor turns it
         hasPowerInput = false
         powered = true
     }
     private var phase = 0.0
-    val running: Boolean get() = powered && (!beltDriven || beltRunning)
-    /** Belted conveyors turn the way the motor faces; free ones the way they face themselves. */
-    val direction: Double get() = if (beltDriven && beltRunning) beltDir.toDouble() else dir
+    val running: Boolean get() = powered && beltRunning
+    /** The belt turns the way the motor faces. */
+    val direction: Double get() = if (belted) beltDir.toDouble() else dir
 
     override fun build(world: World) {
         body = Body(PolygonShape.rect(x, y + 4, x + w, y + h - 4), Vec2.ZERO, BodyKind.STATIC, restitution = 0.1, friction = 0.9, owner = this, tag = "conveyor")
         bodies.add(world.add(body))
     }
 
-    override fun setBeltDrive(running: Boolean, direction: Int) { beltDriven = true; beltRunning = running; beltDir = direction }
+    override fun setBeltDrive(running: Boolean, direction: Int) { belted = true; beltRunning = running; beltDir = direction }
 
     override fun preStep() {
         body.surfaceSpeed = if (running) direction * SPEED else 0.0
@@ -296,12 +298,13 @@ class Conveyor(placement: Placement, index: Int) : Part(placement, index) {
             p.line(-(r - 5), 0.0, r - 5, 0.0, Style.OUTLINE, 1.5)
             p.restore()
         }
-        // direction arrow
+        // direction arrow: bright while the belt turns, dim while it waits for a motor
         val ax = x + w / 2
         val d = direction
-        p.line(ax - 6 * d, y + h / 2, ax + 6 * d, y + h / 2, Style.YELLOW, 2.0)
-        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 - 4, Style.YELLOW, 2.0)
-        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 + 4, Style.YELLOW, 2.0)
+        val col = if (!built || running) Style.YELLOW else Style.GREY
+        p.line(ax - 6 * d, y + h / 2, ax + 6 * d, y + h / 2, col, 2.0)
+        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 - 4, col, 2.0)
+        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 + 4, col, 2.0)
     }
 
     override fun beltHub(): Vec2 = Vec2(x + (if (flipped) w - h / 2 else h / 2), y + h / 2)

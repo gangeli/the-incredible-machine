@@ -59,18 +59,19 @@ object LevelData {
             goal = Goal.Touch(star, ball)
             hint = "A trampoline bounces the ball higher than where it started."
         },
-        level("l06", "Moving walkway", "Get the ball to the star") {
+        level("l06", "Mind the gap", "Get the ball to the star") {
             floor()
             fixed(T.WOOD_WALL, 0.0, 240.0)
-            fixed(T.WOOD_WALL, 160.0, 240.0)
-            fixed(T.WOOD_WALL, 224.0, 240.0)
-            val ball = fixed(T.BOWLING_BALL, 96.0, 96.0)
-            val star = fixed(T.STAR, 256.0, 208.0)
-            wallV(288.0, 208.0, 240.0)
-            tray(T.CONVEYOR, 1)
-            solve(T.CONVEYOR, 64.0, 232.0)
+            fixed(T.INCLINE, 0.0, 208.0)
+            fixed(T.WOOD_WALL, 128.0, 240.0)
+            fixed(T.WOOD_WALL, 192.0, 240.0)
+            val ball = fixed(T.BOWLING_BALL, 8.0, 96.0)
+            val star = fixed(T.STAR, 224.0, 208.0)
+            wallV(256.0, 208.0, 240.0)
+            tray(T.WOOD_WALL, 1)
+            solve(T.WOOD_WALL, 64.0, 240.0)
             goal = Goal.Touch(star, ball)
-            hint = "The conveyor belt carries things along. Fill the gap with it."
+            hint = "The ball rolls down the ramp but the shelf has a hole. Fill it with the plank."
         },
         level("l07", "Trap Pokey", "Trap the cat under the cage") {
             floor()
@@ -303,15 +304,20 @@ object LevelData {
             goal = Goal.TouchType(bell, T.CANNONBALL)
             hint = "A candle lights the rocket, and the rocket's flame lights anything it flies past... like a fuse."
         },
-        level("l27", "Mort's ride", "Get Mort to the cheese") {
-            floor(0.0, 224.0)
-            floor(320.0, 640.0)
-            fixed(T.MOUSE, 40.0, 368.0)
-            fixed(T.CHEESE, 560.0, 368.0)
-            tray(T.CONVEYOR, 1)
-            solve(T.CONVEYOR, 224.0, 376.0)
-            goal = Goal.MouseEatsCheese
-            hint = "Bridge the gap with the conveyor. Which way should it go? Flip it!"
+        level("l27", "Belt up", "Get the ball into the bucket") {
+            floor()
+            // a conveyor never moves on its own: it needs a belt from a motor
+            fixed(T.WOOD_WALL, 128.0, 256.0)
+            val motor = fixed(T.MOTOR, 136.0, 216.0)
+            fixed(T.WOOD_WALL, 232.0, 256.0)
+            fixed(T.WOOD_WALL, 296.0, 256.0)
+            val belt = fixed(T.CONVEYOR, 232.0, 232.0)
+            fixed(T.BOWLING_BALL, 248.0, 200.0)
+            val bucket = fixed(T.BUCKET, 436.0, 340.0)
+            tray(T.BELT, 1)
+            solveBelt(motor, belt)
+            goal = Goal.BallInto(bucket)
+            hint = "The conveyor is still. Tap the belt tool, then the motor, then the conveyor."
         },
         level("l28", "Ding dong", "Ring the bell") {
             floor()
@@ -353,10 +359,10 @@ object LevelData {
             fixed(T.CHEESE, 520.0, 368.0)
             fixed(T.CAT, 592.0, 352.0, flipped = true)
             tray(T.SMALL_WALL, 1)
-            tray(T.CONVEYOR, 1)
+            tray(T.BRICK_WALL, 1)
             tray(T.CAGE, 1)
             solve(T.SMALL_WALL, 80.0, 352.0, rotation = 1)
-            solve(T.CONVEYOR, 224.0, 376.0)
+            solve(T.BRICK_WALL, 224.0, 384.0)
             solve(T.CAGE, 592.0, 328.0)
             goal = Goal.MouseEatsCheese
             hint = "Three jobs: turn Mort around, bridge the gap, and keep Pokey out of the way."
@@ -443,7 +449,7 @@ object LevelData {
             fixed(T.CHEESE, 56.0, 368.0)
             fixed(T.CAT, 0.0, 352.0)
             // a stalled conveyor holds a heavy ball above the bucket; its motor is waiting for power
-            val belt = fixed(T.CONVEYOR, 472.0, 160.0, flipped = true, needsPower = true)
+            val belt = fixed(T.CONVEYOR, 472.0, 160.0, flipped = true)
             fixed(T.BOWLING_BALL, 520.0, 128.0)
             val motor = fixed(T.MOTOR, 552.0, 120.0, flipped = true, needsPower = true)
             belt(motor, belt)
@@ -472,18 +478,20 @@ object LevelData {
             goal = Goal.Touch(star, ball)
             hint = "The switch powers the motor, the motor drives the belt."
         },
-        level("l37", "Belt it", "Get the ball to the star") {
+        level("l37", "Which way round?", "Get the ball into the bucket") {
             floor()
-            val outlet = fixed(T.OUTLET, 96.0, 352.0)
-            val motor = fixed(T.MOTOR, 136.0, 344.0)
-            wire(outlet, motor)
-            val conveyor = fixed(T.CONVEYOR, 232.0, 360.0, needsPower = true)
-            val ball = fixed(T.BOWLING_BALL, 248.0, 328.0)
-            val star = fixed(T.STAR, 520.0, 352.0)
+            fixed(T.WOOD_WALL, 128.0, 256.0)
+            fixed(T.WOOD_WALL, 232.0, 256.0)
+            fixed(T.WOOD_WALL, 296.0, 256.0)
+            val belt = fixed(T.CONVEYOR, 232.0, 232.0)
+            fixed(T.BOWLING_BALL, 248.0, 200.0)
+            val bucket = fixed(T.BUCKET, 436.0, 340.0)
+            tray(T.MOTOR, 1)
             tray(T.BELT, 1)
-            solveBelt(motor, conveyor)
-            goal = Goal.Touch(star, ball)
-            hint = "The belt is stuck. Tap the belt tool, then the motor, then the conveyor."
+            val motor = solve(T.MOTOR, 136.0, 216.0)
+            solveBelt(motor, belt)
+            goal = Goal.BallInto(bucket)
+            hint = "Put the motor on the shelf and tie the belt. The belt runs the way the motor faces: tap the motor to flip it."
         },
         level("l38", "Wire it", "Get the ball to the star") {
             floor()
@@ -502,7 +510,7 @@ object LevelData {
             floor()
             val outlet = fixed(T.OUTLET, 24.0, 352.0)
             val motor = fixed(T.MOTOR, 56.0, 344.0, needsPower = true)
-            val belt = fixed(T.CONVEYOR, 120.0, 296.0, needsPower = true)
+            val belt = fixed(T.CONVEYOR, 120.0, 296.0)
             fixed(T.BOWLING_BALL, 128.0, 264.0)
             val sw = fixed(T.SWITCH, 292.0, 344.0)
             val fan = fixed(T.FAN, 352.0, 176.0, needsPower = true)

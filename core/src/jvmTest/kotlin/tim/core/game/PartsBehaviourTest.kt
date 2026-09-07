@@ -2,6 +2,7 @@ package tim.core.game
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import kotlin.math.abs
 import tim.core.game.parts.*
 import tim.core.physics.AABB
 import tim.core.physics.Vec2
@@ -69,15 +70,17 @@ class PartsBehaviourTest {
     }
 
     @Test
-    fun `conveyor carries a ball in the direction it faces`() {
-        val m = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0) }
-        val ball = m.part<Ball>(1)
+    fun `conveyor only moves with a belt from a motor, in the motor's direction`() {
+        val idle = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0) }
+        idle.run(1.0)
+        assertFalse(idle.part<Conveyor>(0).running)
+        assertTrue(abs(idle.part<Ball>(1).pos.x - 232.0) < 2.0, "a conveyor with no motor is just a shelf")
+        val m = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0); part(PartType.MOTOR, 100.0, 300.0); belt(2, 0) }
         m.run(0.6)
-        assertTrue(ball.pos.x > 260.0, "ball should be carried right, x=${ball.pos.x}")
-        val mf = machine { part(PartType.CONVEYOR, 200.0, 300.0, flipped = true); part(PartType.BOWLING_BALL, 260.0, 260.0) }
-        val ball2 = mf.part<Ball>(1)
+        assertTrue(m.part<Ball>(1).pos.x > 260.0, "ball should be carried right, x=${m.part<Ball>(1).pos.x}")
+        val mf = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 260.0, 260.0); part(PartType.MOTOR, 100.0, 300.0, flipped = true); belt(2, 0) }
         mf.run(0.6)
-        assertTrue(ball2.pos.x < 240.0, "flipped conveyor should carry left, x=${ball2.pos.x}")
+        assertTrue(mf.part<Ball>(1).pos.x < 240.0, "a flipped motor carries left, x=${mf.part<Ball>(1).pos.x}")
     }
 
     @Test

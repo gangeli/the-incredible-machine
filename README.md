@@ -24,7 +24,7 @@ when the machine works.
 
 * Fixed 60 Hz steps with four sub-steps; every run of a machine is deterministic, so the stored solution of each level is verified by a test.
 * Bodies never rotate dynamically (like the original sprites); the seesaw plank is kinematic and tips as a short animation, launching whatever sits on the rising end with a mass-dependent speed copied from the original engine.
-* Restitution uses the smaller of the two bodies' values (walls "defer" to whatever hits them), buckets are soft, trampolines add speed, conveyors drag with their surface, fans push with a force that falls off with distance, balloons are buoyant against the air-pressure setting.
+* Restitution uses the smaller of the two bodies' values (walls "defer" to whatever hits them), buckets are soft, trampolines add speed, conveyors drag with their surface but only turn when a belt from a running motor drives them, fans push with a force that falls off with distance, balloons are buoyant against the air-pressure setting.
 * Ropes are length constraints that can pass over pulleys; scissors and candle flames cut them. A heavy enough load on a rope tied to a seesaw's low end tips it, launching whatever sits there.
 * Mort and Pokey are animated creatures: distance-driven walk cycles, acceleration and smooth turns, blinking, sitting, grooming, startle jumps with an arched back, and landing squash. Mort scurries in bursts and stops to sniff; Pokey sits until he sees a mouse.
 
