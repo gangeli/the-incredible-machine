@@ -5,7 +5,7 @@ browser (installable as a web app on iPad, iPhone, Android and desktops), with 4
 one-sentence goals, a giant Play button, a tutorial nudge on the first puzzles, and a celebration
 when the machine works.
 
-* **Play:** 44 puzzles plus free play with every part. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
+* **Play:** 44 puzzles plus free play with every part. Free play autosaves, and Save keeps named copies in a "My machines" gallery to pick up later. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
 * **Play now:** [gangeli.github.io/the-incredible-machine/play/](https://gangeli.github.io/the-incredible-machine/play/) runs the same game in the browser; "Add to Home Screen" (Safari on iOS) or "Install app" (Chrome) turns it into a full-screen, offline app with its own icon.
 * **Install the APK:** see the [GitHub Pages site](https://gangeli.github.io/the-incredible-machine/) for the APK and step-by-step sideloading instructions. (The site lives in `docs/`; a copy of the signed APK is committed there too, so it also works with "Deploy from a branch: main, /docs". Pages has to be switched on once under *Settings -> Pages*; after that every push to `main` redeploys it.)
 * **Size:** the signed release APK is about 100 KB. All art is vector, all sounds are synthesised.

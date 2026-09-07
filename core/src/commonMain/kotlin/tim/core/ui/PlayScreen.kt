@@ -1,6 +1,7 @@
 package tim.core.ui
 
 import tim.core.game.Board
+import tim.core.game.BoardCodec
 import tim.core.game.Level
 import tim.core.game.Link
 import tim.core.game.LinkKind
@@ -76,7 +77,7 @@ private class Snapshot(val parts: List<Placement>, val links: List<Link>)
  * machine). Designed for small children: huge buttons, snapping, forgiving drops, no text to read
  * except the goal sentence.
  */
-class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(game) {
+class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard: Board? = null, savedId: Int? = null) : Screen(game) {
     companion object {
         const val TUTORIAL_LEVELS = 3
         /** Trays with more kinds of parts than this get category tabs and two columns. */
@@ -85,7 +86,10 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     val isFreeform = levelIndex < 0
     /** The first few puzzles act as a tutorial: an idle child gets shown where the first part goes. */
     val isTutorial = levelIndex in 0 until TUTORIAL_LEVELS
-    var board: Board = level.newBoard()
+    var board: Board = initialBoard ?: level.newBoard()
+        private set
+    /** Free play: the gallery entry this build came from (null until first saved). */
+    var savedId: Int? = savedId
         private set
     private val history = ArrayList<Snapshot>()
     var machine: Machine? = null
@@ -133,8 +137,11 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     private lateinit var stopButton: Button
     private lateinit var homeButton: Button
     private lateinit var undoButton: Button
+    private var saveButton: Button? = null
+    private var machinesButton: Button? = null
+    private var topBarEnd = 0.0
     private lateinit var resetButton: Button
-    private lateinit var hintButton: Button
+    private var hintButton: Button? = null
     private lateinit var flipButton: Button
     private lateinit var rotateButton: Button
     private lateinit var deleteButton: Button
@@ -168,8 +175,15 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         homeButton = add(bh, Style.BLUE, Icons::home) { game.play("tap"); if (isFreeform) game.toTitle() else game.toLevelSelect() }
         undoButton = add(bh, Style.PURPLE, Icons::undo) { undo() }
         resetButton = add(bh, Style.ORANGE, Icons::broom) { askClearAll() }
-        hintButton = add(bh, Style.YELLOW, Icons::bulb) { showHint() }
-        hintButton.visible = !isFreeform
+        if (isFreeform) {
+            hintButton = null
+            saveButton = add(bh * 1.5, Style.GREEN, Icons::save, "Save") { saveMachine() }
+            machinesButton = add(bh * 1.5, Style.YELLOW, Icons::machines, "Mine") { game.play("tap"); game.toMachines() }
+        } else {
+            hintButton = add(bh, Style.YELLOW, Icons::bulb) { showHint() }
+            saveButton = null; machinesButton = null
+        }
+        topBarEnd = bx - 10 * u
         // giant play/stop button at the bottom of the tray column
         val tr = layout.tray
         val ph = 118 * u
@@ -305,7 +319,25 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
 
     private fun boardChanged() {
         preview = Machine(board.copy(), gravity = level.gravity, airPressure = level.airPressure)
+        // free play never loses work: every edit is kept so the next visit resumes here
+        if (isFreeform) game.machines.current = BoardCodec.encode(board)
     }
+
+    private fun saveMachine() {
+        if (running) return
+        linkMode = null
+        if (board.playerParts.isEmpty()) { game.play("nope"); showToast("Build something first!", 2.0); return }
+        val id = game.machines.save(savedId, BoardCodec.encode(board))
+        savedId = id
+        game.machines.currentId = id
+        showToast("Saved as ${game.machines.nameOf(id)}", 3.0)
+        game.play("win")
+        val r = saveButton?.rect ?: layout.field
+        sparkle = Confetti(game.width, game.height).also { it.burst(r.center.x, r.maxY, 40) }
+        sparkleTime = 0.0
+    }
+    private var sparkle: Confetti? = null
+    private var sparkleTime = 0.0
 
     private fun pushHistory() { history.add(Snapshot(ArrayList(board.playerParts), ArrayList(board.playerLinks))); if (history.size > 50) history.removeAt(0) }
 
@@ -565,6 +597,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         for (b in buttons) b.attention = 0.0
         if (m == null) {
             playButton.attention = if (board.playerParts.isNotEmpty() || isFreeform) 1.0 else 0.0
+            sparkle?.let { sp -> sparkleTime += dt; sp.update(dt); if (sparkleTime > 2.5) sparkle = null }
             idleTime += dt
             // Nobody has placed anything for a while: show where the first part goes (twice at most).
             if (isTutorial && board.playerParts.isEmpty() && drag == null && idleTime > 7.0 && nudges < 2 && hintUntil < game.clock) {
@@ -587,6 +620,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             steps++
             if (!won && !isFreeform && level.goal.check(m)) onWin()
         }
+        sparkle?.let { sp -> sparkleTime += dt; sp.update(dt); if (sparkleTime > 2.5) sparkle = null }
         if (won) {
             celebrationTime += dt
             confetti?.update(dt)
@@ -807,7 +841,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
     val clearDialogShowing: Boolean get() = confirmClear
     fun clearDialogButtons(): Pair<AABB, AABB> = clearYesButton.rect to clearNoButton.rect
     fun winButtons(): Pair<AABB, AABB> = replayButton.rect to nextButton.rect
-    fun topBarButtonRect(name: String): AABB = when (name) { "home" -> homeButton; "undo" -> undoButton; "clear" -> resetButton; else -> hintButton }.rect
+    fun topBarButtonRect(name: String): AABB = when (name) { "home" -> homeButton; "undo" -> undoButton; "clear" -> resetButton; "save" -> saveButton!!; "machines" -> machinesButton!!; else -> hintButton!! }.rect
     val dragging: Boolean get() = drag != null
     /** Screen rectangle of a floating action button ("flip", "rotate", "delete", "unlink"), if visible. */
     fun actionButton(name: String): AABB? {
@@ -837,6 +871,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         syncPlayButtons()
         for (b in buttons) if (b !== nextButton && b !== replayButton && b !== clearYesButton && b !== clearNoButton) b.draw(p, u, t)
         drawDragGhost(p, t)
+        sparkle?.draw(p)
         if (hintUntil > t && board.playerParts.isEmpty() && !running) drawNudgeArrow(p, t)
         if (won) drawWin(p)
         else if (failed) drawFail(p)
@@ -986,7 +1021,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
         val tb = layout.topBar
         val u = game.u
         p.fillRect(tb.minX, tb.minY, tb.width, tb.height, Style.NAVY)
-        val left = hintButton.rect.maxX + 14 * u
+        val left = topBarEnd + 14 * u
         val right = tb.maxX - 14 * u
         val gw = right - left
         if (gw > 100 * u) {
@@ -994,7 +1029,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int) : Screen(gam
             val showingToast = toastUntil > t
             p.fillRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, if (showingToast) Style.YELLOW else Style.CREAM)
             p.strokeRoundRect(left, tb.minY + 10 * u, gw, tb.height - 20 * u, 14 * u, Style.OUTLINE, 2 * u)
-            val title = if (showingToast) toast else if (isFreeform) "Free play: build anything!" else level.goalText
+            val title = if (showingToast) toast else if (isFreeform) (savedId?.let { game.machines.nameOf(it) } ?: "Free play: build anything!") else level.goalText
             val textLeft = if (isFreeform) left + 15 * u else left + 60 * u
             val avail = right - 15 * u - textLeft
             var size = 28 * u

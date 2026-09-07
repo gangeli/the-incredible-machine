@@ -15,7 +15,7 @@ class IconSheetTest {
         "play" to Icons::play, "stop" to Icons::stop, "home" to Icons::home, "back" to Icons::back, "next" to Icons::next,
         "undo" to Icons::undo, "trash" to Icons::trash, "broom" to Icons::broom, "scissors" to Icons::scissors, "bulb" to Icons::bulb,
         "flip" to Icons::flip, "rotate" to Icons::rotate, "close" to Icons::close, "check" to Icons::check, "replay" to Icons::replay,
-        "wrench" to Icons::wrench, "install" to Icons::install, "star" to { p, x, y, s -> Icons.star(p, x, y, s) },
+        "wrench" to Icons::wrench, "install" to Icons::install, "save" to Icons::save, "machines" to Icons::machines, "plus" to Icons::plus, "star" to { p, x, y, s -> Icons.star(p, x, y, s) },
         "sound on" to { p, x, y, s -> Icons.sound(p, x, y, s, true) }, "sound off" to { p, x, y, s -> Icons.sound(p, x, y, s, false) },
     )
 

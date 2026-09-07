@@ -1,5 +1,6 @@
 package tim.core.ui
 
+import tim.core.game.BoardCodec
 import tim.core.game.Levels
 import tim.core.physics.Vec2
 import tim.core.render.Painter
@@ -51,6 +52,7 @@ abstract class Screen(val game: Game) {
  */
 class Game(val storage: Storage, val sound: SoundPlayer = SoundPlayer {}) {
     val progress = Progress(storage)
+    val machines = SavedMachines(storage)
     /**
      * Set by platforms that can put the game on a home screen (the browser build); while set, the
      * title screen shows an Install button that calls it. [installAttention] makes that button pulse.
@@ -95,7 +97,24 @@ class Game(val storage: Storage, val sound: SoundPlayer = SoundPlayer {}) {
     fun play(name: String) { if (progress.soundOn) sound.play(name) }
 
     fun startLevel(index: Int) { goTo(PlayScreen(this, Levels.all[index.coerceIn(0, Levels.all.size - 1)], index)) }
-    fun startFreeform() { goTo(PlayScreen(this, Levels.freeform(), -1)) }
+    /**
+     * Free play resumes the build in progress; [savedId] opens a machine from the gallery instead,
+     * and [fresh] starts with an empty floor.
+     */
+    fun startFreeform(savedId: Int? = null, fresh: Boolean = false) {
+        val level = Levels.freeform()
+        val encoded = when {
+            fresh -> null
+            savedId != null -> machines.get(savedId)?.encoded
+            else -> machines.current
+        }
+        val id = if (fresh) null else savedId ?: machines.currentId
+        val board = encoded?.let { BoardCodec.decode(it, level.fixed, level.fixedLinks) }
+        machines.current = encoded
+        machines.currentId = id
+        goTo(PlayScreen(this, level, -1, board, id))
+    }
+    fun toMachines() { goTo(MachinesScreen(this)) }
     fun toTitle() { goTo(TitleScreen(this)) }
     fun toLevelSelect() { goTo(LevelSelectScreen(this)) }
 

@@ -157,6 +157,24 @@ object Icons {
             p.line(8.0, -8.0, 22.0, 8.0, Style.RED, 4.0); p.line(8.0, 8.0, 22.0, -8.0, Style.RED, 4.0)
         }
     }
+    /** Floppy disk: keep this machine. */
+    fun save(p: Painter, x: Double, y: Double, s: Double) {
+        outlined(p, Path.polygon(-18.0, -18.0, 12.0, -18.0, 18.0, -12.0, 18.0, 18.0, -18.0, 18.0))
+        p.fillRoundRect(-11.0, -18.0, 20.0, 11.0, 1.5, Style.OUTLINE)
+        p.fillRect(3.0, -15.0, 4.0, 6.0, W)
+        p.fillRoundRect(-11.0, 3.0, 22.0, 13.0, 2.0, Style.OUTLINE)
+        p.fillRoundRect(-8.0, 6.0, 16.0, 7.0, 1.5, Style.YELLOW)
+    }
+    /** A toy box with a star on it: the saved machines. */
+    fun machines(p: Painter, x: Double, y: Double, s: Double) {
+        outlined(p, Path.polygon(-20.0, -6.0, 20.0, -6.0, 16.0, 20.0, -16.0, 20.0))
+        outlined(p, Path.roundRect(-22.0, -14.0, 44.0, 10.0, 3.0))
+        p.save(); p.translate(0.0, 6.0); p.scale(0.42, 0.42); star(p, 0.0, 0.0, 48.0); p.restore()
+    }
+    fun plus(p: Painter, x: Double, y: Double, s: Double) {
+        p.line(-16.0, 0.0, 16.0, 0.0, Style.OUTLINE, 12.0); p.line(0.0, -16.0, 0.0, 16.0, Style.OUTLINE, 12.0)
+        p.line(-16.0, 0.0, 16.0, 0.0, W, 6.0); p.line(0.0, -16.0, 0.0, 16.0, W, 6.0)
+    }
     /** Arrow dropping into a tray: "put this on your home screen". */
     fun install(p: Painter, x: Double, y: Double, s: Double) {
         outlined(p, Path.polygon(-6.0, -22.0, 6.0, -22.0, 6.0, -6.0, 15.0, -6.0, 0.0, 10.0, -15.0, -6.0, -6.0, -6.0))
