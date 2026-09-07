@@ -303,13 +303,14 @@ class Conveyor(placement: Placement, index: Int) : Part(placement, index) {
             p.line(-(r - 5), 0.0, r - 5, 0.0, Style.OUTLINE, 1.5)
             p.restore()
         }
-        // direction arrow: bright while the belt turns, dim while it waits for a motor
+        // a chunky direction arrow: bright while the belt turns, dim while it waits for a motor
         val ax = x + w / 2
         val d = direction
+        val my = y + h / 2
         val col = if (!built || running) Style.YELLOW else Style.GREY
-        p.line(ax - 6 * d, y + h / 2, ax + 6 * d, y + h / 2, col, 2.0)
-        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 - 4, col, 2.0)
-        p.line(ax + 6 * d, y + h / 2, ax + 2 * d, y + h / 2 + 4, col, 2.0)
+        val arrow = Path.polygon(ax - 11 * d, my - 3, ax + 3 * d, my - 3, ax + 3 * d, my - 7, ax + 12 * d, my, ax + 3 * d, my + 7, ax + 3 * d, my + 3, ax - 11 * d, my + 3)
+        p.fillPath(arrow, col)
+        p.strokePath(arrow, Style.OUTLINE, 1.2)
     }
 
     override fun beltHub(): Vec2 = Vec2(x + (if (flipped) w - h / 2 else h / 2), y + h / 2)
@@ -346,13 +347,19 @@ class Fan(placement: Placement, index: Int) : Part(placement, index) {
 
     override fun draw(p: Painter, t: Double) {
         val sp = if (built) spin else t * 8
+        p.save()
+        // drawn facing right and mirrored when flipped, so the motor casing and grille show which way it blows
+        if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
         // base + stand
         p.fillRoundRect(x + 6, y + h - 6, w - 12, 6.0, 3.0, Style.STEEL)
         p.strokeRoundRect(x + 6, y + h - 6, w - 12, 6.0, 3.0, Style.OUTLINE, Style.LINE)
-        p.line(cx, y + h - 6, cx, y + 20, Style.OUTLINE, 3.0)
+        val r = 13.0
+        val ccx = x + 18; val ccy = y + 16
+        p.line(ccx, y + h - 6, ccx, ccy + r - 2, Style.OUTLINE, 3.0)
+        // motor casing pokes out behind the cage
+        Draw.outlinedRoundRect(p, x + 1, ccy - 8, 12.0, 16.0, 3.0, Style.STEEL)
+        p.fillRect(x + 3, ccy - 5, 2.0, 10.0, Style.GREY_DARK)
         // cage (circle) with blades
-        val r = 14.0
-        val ccx = cx; val ccy = y + 16
         p.fillCircle(ccx, ccy, r, Style.STEEL_LIGHT)
         p.save(); p.translate(ccx, ccy); p.rotate(sp)
         for (i in 0 until 3) {
@@ -363,6 +370,11 @@ class Fan(placement: Placement, index: Int) : Part(placement, index) {
         }
         p.restore()
         p.fillCircle(ccx, ccy, 2.5, Style.OUTLINE)
+        // safety grille across the front (the blowing side)
+        for (gx in listOf(4.0, 8.0)) {
+            val half = kotlin.math.sqrt(r * r - gx * gx) - 1.0
+            p.line(ccx + gx, ccy - half, ccx + gx, ccy + half, Colors.withAlpha(Style.OUTLINE, 0.55), 1.2)
+        }
         p.strokeCircle(ccx, ccy, r, Style.OUTLINE, Style.LINE)
         // wind lines when running
         if (built && running) {
@@ -370,11 +382,12 @@ class Fan(placement: Placement, index: Int) : Part(placement, index) {
             for (i in 0 until 3) {
                 val wy = ccy - 8 + i * 8
                 val phase = ((sp * 3 + i * 7) % 24)
-                val sx = if (flipped) x - 6 - phase else x + w + 6 + phase
-                p.line(sx, wy, sx + dir * 10, wy, Style.BLUE, 1.5)
+                val sx = x + w + 4 + phase
+                p.line(sx, wy, sx + 10, wy, Style.BLUE, 1.5)
             }
             p.alpha = 1.0
         }
+        p.restore()
     }
 }
 

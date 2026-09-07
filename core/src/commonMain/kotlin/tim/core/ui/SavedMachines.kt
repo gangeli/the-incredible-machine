@@ -1,5 +1,9 @@
 package tim.core.ui
 
+import tim.core.game.BoardCodec
+import tim.core.game.Levels
+import tim.core.game.MachineNamer
+
 /**
  * The player's free-play creations. The build in progress is autosaved as the "current" machine so
  * free play always resumes where it left off; Save keeps a named copy that the gallery lists.
@@ -33,10 +37,38 @@ class SavedMachines(private val storage: Storage) {
         }
         storage.put("machines:$useId", encoded)
         if (useId !in ids()) writeIds(ids() + useId)
+        // machines name themselves after what they are made of until the player picks a name
+        if (storage.get("machines:$useId:named") != "1") {
+            val free = Levels.freeform()
+            val board = runCatching { BoardCodec.decode(encoded, free.fixed, free.fixedLinks) }.getOrNull()
+            if (board != null) storage.put("machines:$useId:name", unique(MachineNamer.name(board), useId))
+        }
         return useId
     }
 
-    fun rename(id: Int, name: String) { if (name.isNotBlank()) storage.put("machines:$id:name", name.trim().take(24)) }
+    /** The player's own name for a machine; blank names are ignored. */
+    fun rename(id: Int, name: String) {
+        if (name.isBlank()) return
+        storage.put("machines:$id:name", name.trim().take(MachineNamer.MAX_LENGTH))
+        storage.put("machines:$id:named", "1")
+    }
+
+    /** [base], or "[base] II", "[base] III"... when another machine already has that name. */
+    private fun unique(base: String, id: Int): String {
+        val taken = ids().filter { it != id }.map { nameOf(it) }.toSet()
+        if (base !in taken) return base
+        val numerals = listOf("II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
+        var n = 0
+        while (true) {
+            val suffix = if (n < numerals.size) numerals[n] else (n + 2).toString()
+            val room = MachineNamer.MAX_LENGTH - suffix.length - 1
+            var short = base.take(room)
+            if (short.length < base.length && !base[short.length].isWhitespace() && short.contains(' ')) short = short.substringBeforeLast(' ')
+            val candidate = "${short.trimEnd()} $suffix"
+            if (candidate !in taken) return candidate
+            n++
+        }
+    }
 
     fun delete(id: Int) {
         storage.put("machines:$id", "")

@@ -135,7 +135,10 @@ class MachinesScreen(game: Game) : Screen(game) {
             val pw = 560 * u; val ph = 240 * u
             val px = game.width / 2 - pw / 2; val py = game.height / 2 - ph / 2 + 10 * u
             p.panel(px, py, pw, ph, 28 * u, Style.CREAM, 4 * u)
-            p.textCentered("Throw ${t.name} away?", game.width / 2, py + 62 * u, 34 * u, Style.OUTLINE)
+            val ask = "Throw ${t.name} away?"
+            var ts2 = 34 * u
+            while (ts2 > 20 * u && p.textWidth(ask, ts2) > pw - 40 * u) ts2 -= 2 * u
+            p.textCentered(ask, game.width / 2, py + 62 * u, ts2, Style.OUTLINE)
             p.textCentered("It will be gone for good.", game.width / 2, py + 104 * u, 20 * u, Style.GREY_DARK)
             noButton.draw(p, u, game.clock); yesButton.draw(p, u, game.clock)
         }
