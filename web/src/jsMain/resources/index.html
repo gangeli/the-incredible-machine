@@ -21,12 +21,17 @@
     /* phones held upright: the playfield needs a wide screen */
     #rotate { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; text-align: center; background: #2E3D6B; color: #F9D66B; font: bold 26px system-ui, sans-serif; padding: 24px; }
     @media (orientation: portrait) and (max-width: 640px) { #rotate { display: flex; } }
+    /* install instructions (shown from the Install button) */
+    #hint { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; background: rgba(46,61,107,.6); z-index: 10; }
+    #hint > div { background: #FFF6E5; color: #1E2A3A; border: 3px solid #1E2A3A; border-radius: 22px; box-shadow: 0 6px 0 rgba(0,0,0,.3); padding: 22px 26px; max-width: 460px; margin: 20px; font: 600 18px/1.4 system-ui, sans-serif; text-align: center; }
+    #hint button { margin-top: 16px; background: #5CB85C; color: white; font: 800 18px system-ui, sans-serif; border: 3px solid #1E2A3A; border-radius: 14px; padding: 10px 26px; box-shadow: 0 4px 0 rgba(0,0,0,.3); }
   </style>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="loading">Loading the machine…</div>
   <div id="rotate"><div>&#x21BB;<br>Turn your device sideways to play</div></div>
+  <div id="hint"><div><div id="hint-text"></div><button id="hint-close" type="button">OK</button></div></div>
   <script src="tim.js?v=@VERSION@"></script>
 </body>
 </html>

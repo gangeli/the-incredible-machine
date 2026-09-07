@@ -116,6 +116,24 @@ class UiFixesTest {
     }
 
     @Test
+    fun `the title screen offers Install only when the platform can install`() {
+        val g = newGame()
+        val title = g.screen as TitleScreen
+        assertNull(title.installButtonRect(), "no install button without a platform hook")
+        var installs = 0
+        g.installAction = { installs++ }
+        g.installAttention = true
+        g.update(0.02)
+        val r = title.installButtonRect() ?: error("install button should appear once the hook is set")
+        shot(g, "screen-title-install")
+        tap(g, r.center.x, r.center.y)
+        assertEquals(1, installs, "tapping Install calls the platform")
+        g.installAction = null
+        g.update(0.02)
+        assertNull(title.installButtonRect(), "button goes away once installed")
+    }
+
+    @Test
     fun `level list with every puzzle solved`() {
         val g = Game(MemoryStorage()).also { it.resize(1280, 2560); it.update(0.0) }
         for (l in Levels.all) g.progress.setStars(l.id, 3)

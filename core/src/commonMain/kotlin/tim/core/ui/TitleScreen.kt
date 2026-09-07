@@ -35,8 +35,21 @@ class TitleScreen(game: Game) : Screen(game) {
             game.progress.soundOn = !game.progress.soundOn; game.play("tap")
         }
         buttons.add(playButton); buttons.add(freeButton); buttons.add(soundButton)
+        installButton = null
+        game.installAction?.let { action ->
+            val b = Button(AABB(20 * u, game.height - 20 * u - 84 * u, 20 * u + 190 * u, game.height - 20 * u), Style.PURPLE, Icons::install, "Install") {
+                game.play("tap"); action()
+            }
+            b.attention = if (game.installAttention) 1.0 else 0.0
+            installButton = b
+            buttons.add(b)
+        }
         restartDemo()
     }
+
+    private var installButton: Button? = null
+    /** Test hook: the Install button's rectangle when the platform offers installing. */
+    fun installButtonRect(): AABB? = installButton?.rect
 
     private var demoIndex = 0
     private fun restartDemo() {
@@ -48,6 +61,9 @@ class TitleScreen(game: Game) : Screen(game) {
     }
 
     override fun update(dt: Double) {
+        // the platform may learn that it can install after the screen was built (Chrome fires the event late)
+        if ((game.installAction != null) != (installButton != null)) onEnter()
+        installButton?.attention = if (game.installAttention) 1.0 else 0.0
         acc += dt
         val m = demo ?: return
         var n = 0

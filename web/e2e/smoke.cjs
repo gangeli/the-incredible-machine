@@ -19,6 +19,11 @@ await page.goto(base, { waitUntil: 'load' });
 await page.waitForFunction(() => window.timDebug && window.timDebug.screen() === 'TitleScreen', null, { timeout: 20000 });
 await page.waitForTimeout(500);
 await page.screenshot({ path: `${out}/web-title.png` });
+// Chrome's install prompt: faking the event must make the title screen offer Install
+await page.evaluate(() => { const e = new Event('beforeinstallprompt'); e.prompt = () => {}; window.dispatchEvent(e); });
+await page.waitForFunction(() => window.timDebug.canInstall());
+await page.waitForTimeout(100);
+await page.screenshot({ path: `${out}/web-title-install.png` });
 const msPerStep = await page.evaluate(() => window.timDebug.bench(3000));
 console.log(`physics: ${msPerStep.toFixed(3)} ms per 60 Hz step of a busy level (budget 16.7 ms)`);
 

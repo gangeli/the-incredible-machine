@@ -157,6 +157,11 @@ object Icons {
             p.line(8.0, -8.0, 22.0, 8.0, Style.RED, 4.0); p.line(8.0, 8.0, 22.0, -8.0, Style.RED, 4.0)
         }
     }
+    /** Arrow dropping into a tray: "put this on your home screen". */
+    fun install(p: Painter, x: Double, y: Double, s: Double) {
+        outlined(p, Path.polygon(-6.0, -22.0, 6.0, -22.0, 6.0, -6.0, 15.0, -6.0, 0.0, 10.0, -15.0, -6.0, -6.0, -6.0))
+        outlined(p, Path.polygon(-20.0, 8.0, -13.0, 8.0, -13.0, 15.0, 13.0, 15.0, 13.0, 8.0, 20.0, 8.0, 20.0, 22.0, -20.0, 22.0))
+    }
     fun wrench(p: Painter, x: Double, y: Double, s: Double) {
         p.save(); p.rotate(-0.78)
         // handle

@@ -82,7 +82,49 @@ private fun start() {
         try { nav.serviceWorker.register("sw.js") } catch (t: Throwable) {}
     }
     document.getElementById("loading")?.let { it.parentNode?.removeChild(it) }
+    setupInstall(game)
     window.asDynamic().timDebug = debugHooks(game)
+}
+
+/**
+ * "Put it on the home screen": Chrome, Edge and Android browsers fire beforeinstallprompt and let us
+ * open the real install dialog; Safari on iPad/iPhone only installs through its Share menu, so there
+ * the button shows instructions. Nothing is offered once the game already runs from the home screen.
+ */
+private fun setupInstall(game: Game) {
+    val nav = window.navigator.asDynamic()
+    val standalone = (window.matchMedia("(display-mode: standalone)").matches || window.matchMedia("(display-mode: fullscreen)").matches || nav.standalone == true)
+    if (standalone) return
+    val hint = document.getElementById("hint")
+    val hintText = document.getElementById("hint-text")
+    fun showHint(text: String) { hintText?.textContent = text; hint?.asDynamic()?.style?.display = "flex" }
+    document.getElementById("hint-close")?.addEventListener("click", { hint?.asDynamic()?.style?.display = "none" })
+    val wantsInstall = window.location.hash == "#install"
+    game.installAttention = wantsInstall
+    val ios = js("/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)") as Boolean
+    if (ios) {
+        val text = "Tap the Share button (the square with an arrow), then \"Add to Home Screen\". The game then opens full screen, works offline and keeps your progress."
+        game.installAction = { showHint(text) }
+        if (wantsInstall) showHint(text)
+        return
+    }
+    var deferred: dynamic = null
+    window.addEventListener("beforeinstallprompt", { e ->
+        e.preventDefault()
+        deferred = e
+        game.installAction = {
+            val d = deferred
+            if (d != null) { d.prompt(); d.userChoice?.then { _: dynamic -> deferred = null; game.installAction = null; game.installAttention = false } }
+        }
+    })
+    window.addEventListener("appinstalled", { game.installAction = null; game.installAttention = false; hint?.asDynamic()?.style?.display = "none" })
+    if (wantsInstall) {
+        // give Chrome a moment to decide whether the page is installable
+        window.setTimeout({
+            if (game.installAction != null) showHint("Tap the purple Install button to put the game on your home screen.")
+            else showHint("This browser cannot install web apps. On Android use Chrome; on iPad or iPhone use Safari and its Share button; on a computer use Chrome or Edge.")
+        }, 1500)
+    }
 }
 
 /** A few read-only hooks so a browser test can find things on the canvas. */
@@ -98,6 +140,7 @@ private fun debugHooks(game: Game): dynamic {
     hooks.toScreen = { x: Double, y: Double -> (game.screen as? PlayScreen)?.let { val p = it.layout.toScreen(Vec2(x, y)); val o = js("({})"); o.x = p.x; o.y = p.y; o } }
     hooks.solution = { (game.screen as? PlayScreen)?.level?.solution?.map { val o = js("({})"); o.type = it.type.name; o.x = it.x; o.y = it.y; o.w = it.w; o.h = it.h; o }?.toTypedArray() }
     hooks.startLevel = { i: Int -> game.startLevel(i) }
+    hooks.canInstall = { game.installAction != null }
     // physics cost: milliseconds per 60 Hz step of a busy level, averaged over [steps] steps
     hooks.bench = { steps: Int ->
         val lvl = tim.core.game.Levels.all.first { it.id == "l43" }

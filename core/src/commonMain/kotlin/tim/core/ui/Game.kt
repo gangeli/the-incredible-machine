@@ -51,6 +51,12 @@ abstract class Screen(val game: Game) {
  */
 class Game(val storage: Storage, val sound: SoundPlayer = SoundPlayer {}) {
     val progress = Progress(storage)
+    /**
+     * Set by platforms that can put the game on a home screen (the browser build); while set, the
+     * title screen shows an Install button that calls it. [installAttention] makes that button pulse.
+     */
+    var installAction: (() -> Unit)? = null
+    var installAttention = false
     var width = 1280.0
         private set
     var height = 800.0
