@@ -1,11 +1,11 @@
 # The Incredible Machine (tablet remake)
 
 A from-scratch remake of Sierra/Dynamix's 1993 contraption puzzle game for Android tablets and the
-browser (installable as a web app on iPad, iPhone, Android and desktops), with 44 puzzles and a free-play mode, designed so a six-year-old can play it on a tablet: big parts, fine-grained snapping placement, forgiving drops,
+browser (installable as a web app on iPad, iPhone, Android and desktops), with 46 puzzles and a free-play mode, designed so a six-year-old can play it on a tablet: big parts, fine-grained snapping placement, forgiving drops,
 one-sentence goals, a giant Play button, a tutorial nudge on the first puzzles, and a celebration
 when the machine works.
 
-* **Play:** 44 puzzles plus free play with every part. Free play autosaves, and Save keeps named copies in a "My machines" gallery to pick up later. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
+* **Play:** 46 puzzles plus free play with every part. Free play autosaves, and Save keeps named copies in a "My machines" gallery to pick up later. Ropes, belts and wires are tied by tapping the tool, then the two things to join (pulleys in between for ropes); free play sorts the parts into category tabs.
 * **Play now:** [gangeli.github.io/the-incredible-machine/play/](https://gangeli.github.io/the-incredible-machine/play/) runs the same game in the browser; "Add to Home Screen" (Safari on iOS) or "Install app" (Chrome) turns it into a full-screen, offline app with its own icon.
 * **Install the APK:** see the [GitHub Pages site](https://gangeli.github.io/the-incredible-machine/) for the APK and step-by-step sideloading instructions. (The site lives in `docs/`; a copy of the signed APK is committed there too, so it also works with "Deploy from a branch: main, /docs". Pages has to be switched on once under *Settings -> Pages*; after that every push to `main` redeploys it.)
 * **Size:** the signed release APK is about 100 KB. All art is vector, all sounds are synthesised.
@@ -24,6 +24,7 @@ when the machine works.
 
 * Fixed 60 Hz steps with four sub-steps; every run of a machine is deterministic, so the stored solution of each level is verified by a test.
 * Bodies never rotate dynamically (like the original sprites); the seesaw plank is kinematic and tips as a short animation, launching whatever sits on the rising end with a mass-dependent speed copied from the original engine.
+* Fans and motors only run when plugged in: next to an outlet or a switched outlet (they plug themselves in, like the original), or wired to one. Conveyors only turn when a belt from a running motor drives them.
 * Restitution uses the smaller of the two bodies' values (walls "defer" to whatever hits them), buckets are soft, trampolines add speed, conveyors drag with their surface but only turn when a belt from a running motor drives them, fans push with a force that falls off with distance, balloons are buoyant against the air-pressure setting.
 * Ropes are length constraints that can pass over pulleys; scissors and candle flames cut them. A heavy enough load on a rope tied to a seesaw's low end tips it, launching whatever sits there.
 * Mort and Pokey are animated creatures: distance-driven walk cycles, acceleration and smooth turns, blinking, sitting, grooming, startle jumps with an arched back, and landing squash. Mort scurries in bursts and stops to sniff; Pokey sits until he sees a mouse.

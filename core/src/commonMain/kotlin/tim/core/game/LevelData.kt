@@ -167,10 +167,11 @@ object LevelData {
             for (i in 0 until 4) fixed(T.WOOD_WALL, 80.0 + i * 64, 160.0)
             val balloon = fixed(T.BALLOON, 96.0, 320.0)
             val star = fixed(T.STAR, 272.0, 176.0)
+            fixed(T.OUTLET, 8.0, 176.0)
             tray(T.FAN, 1)
             solve(T.FAN, 32.0, 176.0)
             goal = Goal.Touch(star, balloon)
-            hint = "The balloon floats up to the ceiling. Blow it sideways with the fan."
+            hint = "The balloon floats up to the ceiling. Put the fan next to the plug so it can blow the balloon sideways."
         },
         level("l17", "Bounce back", "Get the ball to the star") {
             floor()
@@ -227,10 +228,11 @@ object LevelData {
             fixed(T.BALLOON, 96.0, 320.0)
             fixed(T.WOOD_WALL, 272.0, 224.0)
             fixed(T.CANDLE, 280.0, 192.0)
+            fixed(T.OUTLET, 8.0, 176.0)
             tray(T.FAN, 1)
             solve(T.FAN, 32.0, 176.0)
             goal = Goal.PopAllBalloons
-            hint = "Blow the balloon along the ceiling into the candle flame."
+            hint = "Plug the fan in next to the outlet and blow the balloon along the ceiling into the candle flame."
         },
         level("l41", "Puff", "Pop the balloon") {
             floor()
@@ -247,6 +249,17 @@ object LevelData {
             solve(T.CANDLE, 376.0, 192.0)
             goal = Goal.PopAllBalloons
             hint = "The bellows puff when something lands on them. Catch the ball with them, aim at the balloon, and put the candle on the shelf where the balloon will float."
+        },
+        level("l45", "Slide up", "Pop the balloon") {
+            floor()
+            for (i in 0 until 5) fixed(T.WOOD_WALL, 0.0 + i * 64, 0.0)
+            fixed(T.BALLOON, 16.0, 320.0)
+            fixed(T.WOOD_WALL, 80.0, 140.0)
+            fixed(T.CANDLE, 84.0, 108.0)
+            tray(T.INCLINE, 1)
+            solve(T.INCLINE, 16.0, 88.0, flipped = true, rotation = 2)
+            goal = Goal.PopAllBalloons
+            hint = "Turn the ramp upside down (tap it, then the turn button twice) so the rising balloon slides along it towards the candle."
         },
         level("l22", "On the moon", "Get the ball to the star") {
             gravity = 160.0
@@ -293,22 +306,24 @@ object LevelData {
         },
         level("l26", "Rocket mail", "Ring the bell") {
             floor()
-            // a cannon on a shelf points at the bell; its fuse hangs off the back end
-            fixed(T.WOOD_WALL, 320.0, 160.0)
-            fixed(T.CANNON, 320.0, 120.0)
-            val bell = fixed(T.BELL, 568.0, 112.0)
+            // the bell hangs high up; a rocket lit by a candle flies straight up into it
+            val bell = fixed(T.BELL, 312.0, 32.0)
+            fixed(T.WOOD_WALL, 176.0, 200.0)
+            fixed(T.WOOD_WALL, 400.0, 200.0)
             tray(T.ROCKET, 1)
             tray(T.CANDLE, 1)
-            solve(T.ROCKET, 312.0, 320.0)
-            solve(T.CANDLE, 296.0, 352.0)
-            goal = Goal.TouchType(bell, T.CANNONBALL)
-            hint = "A candle lights the rocket, and the rocket's flame lights anything it flies past... like a fuse."
+            val rocket = solve(T.ROCKET, 320.0, 320.0)
+            solve(T.CANDLE, 304.0, 352.0)
+            goal = Goal.Touch(bell, rocket)
+            hint = "Stand the rocket right under the bell and put the candle next to it to light the fuse."
         },
         level("l27", "Belt up", "Get the ball into the bucket") {
             floor()
             // a conveyor never moves on its own: it needs a belt from a motor
             fixed(T.WOOD_WALL, 128.0, 256.0)
-            val motor = fixed(T.MOTOR, 136.0, 216.0)
+            fixed(T.WOOD_WALL, 192.0, 256.0)
+            fixed(T.OUTLET, 136.0, 224.0)
+            val motor = fixed(T.MOTOR, 160.0, 216.0)
             fixed(T.WOOD_WALL, 232.0, 256.0)
             fixed(T.WOOD_WALL, 296.0, 256.0)
             val belt = fixed(T.CONVEYOR, 232.0, 232.0)
@@ -451,7 +466,7 @@ object LevelData {
             // a stalled conveyor holds a heavy ball above the bucket; its motor is waiting for power
             val belt = fixed(T.CONVEYOR, 472.0, 160.0, flipped = true)
             fixed(T.BOWLING_BALL, 520.0, 128.0)
-            val motor = fixed(T.MOTOR, 552.0, 120.0, flipped = true, needsPower = true)
+            val motor = fixed(T.MOTOR, 552.0, 120.0, flipped = true)
             belt(motor, belt)
             val sw = fixed(T.SWITCH, 612.0, 344.0)
             tray(T.BASEBALL, 1)
@@ -463,6 +478,21 @@ object LevelData {
             goal = Goal.MouseEatsCheese
             hint = "Wire the switch to the motor, drop a ball on the switch, and keep Pokey away from the cheese."
             timeLimit = 30.0
+        },
+        level("l46", "Up, up and away", "Get Mort to the cheese") {
+            floor()
+            val cage = fixed(T.CAGE, 280.0, 328.0)
+            fixed(T.MOUSE, 296.0, 368.0, flipped = true)
+            fixed(T.CHEESE, 56.0, 368.0)
+            tray(T.BALLOON, 3)
+            tray(T.ROPE, 3)
+            val b1 = solve(T.BALLOON, 232.0, 200.0)
+            val b2 = solve(T.BALLOON, 288.0, 184.0)
+            val b3 = solve(T.BALLOON, 344.0, 200.0)
+            solveRope(b1, cage); solveRope(b2, cage); solveRope(b3, cage)
+            goal = Goal.MouseEatsCheese
+            hint = "One balloon is not enough to lift a cage, two just hold it, three take it away. Tie all three to the cage."
+            timeLimit = 25.0
         },
         level("l36", "Power up", "Get the ball to the star") {
             floor()
@@ -481,6 +511,8 @@ object LevelData {
         level("l37", "Which way round?", "Get the ball into the bucket") {
             floor()
             fixed(T.WOOD_WALL, 128.0, 256.0)
+            fixed(T.WOOD_WALL, 192.0, 256.0)
+            fixed(T.OUTLET, 136.0, 224.0)
             fixed(T.WOOD_WALL, 232.0, 256.0)
             fixed(T.WOOD_WALL, 296.0, 256.0)
             val belt = fixed(T.CONVEYOR, 232.0, 232.0)
@@ -488,15 +520,15 @@ object LevelData {
             val bucket = fixed(T.BUCKET, 436.0, 340.0)
             tray(T.MOTOR, 1)
             tray(T.BELT, 1)
-            val motor = solve(T.MOTOR, 136.0, 216.0)
+            val motor = solve(T.MOTOR, 160.0, 216.0)
             solveBelt(motor, belt)
             goal = Goal.BallInto(bucket)
-            hint = "Put the motor on the shelf and tie the belt. The belt runs the way the motor faces: tap the motor to flip it."
+            hint = "Put the motor next to the plug and tie the belt. The belt runs the way the motor faces: tap the motor to flip it."
         },
         level("l38", "Wire it", "Get the ball to the star") {
             floor()
             val sw = fixed(T.SWITCH, 120.0, 344.0)
-            val fan = fixed(T.FAN, 336.0, 344.0, needsPower = true)
+            val fan = fixed(T.FAN, 336.0, 344.0)
             val tennis = fixed(T.TENNIS_BALL, 400.0, 368.0)
             val star = fixed(T.STAR, 592.0, 352.0)
             tray(T.WIRE, 1)
@@ -508,12 +540,12 @@ object LevelData {
         },
         level("l44", "Power chain", "Pop the balloon") {
             floor()
-            val outlet = fixed(T.OUTLET, 24.0, 352.0)
-            val motor = fixed(T.MOTOR, 56.0, 344.0, needsPower = true)
+            val outlet = fixed(T.OUTLET, 8.0, 352.0)
+            val motor = fixed(T.MOTOR, 72.0, 344.0)
             val belt = fixed(T.CONVEYOR, 120.0, 296.0)
             fixed(T.BOWLING_BALL, 128.0, 264.0)
             val sw = fixed(T.SWITCH, 292.0, 344.0)
-            val fan = fixed(T.FAN, 352.0, 176.0, needsPower = true)
+            val fan = fixed(T.FAN, 352.0, 176.0)
             for (i in 0 until 4) fixed(T.WOOD_WALL, 384.0 + i * 64, 160.0)
             fixed(T.BALLOON, 400.0, 320.0)
             fixed(T.WOOD_WALL, 560.0, 224.0)

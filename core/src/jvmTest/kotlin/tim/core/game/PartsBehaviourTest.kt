@@ -75,21 +75,88 @@ class PartsBehaviourTest {
         idle.run(1.0)
         assertFalse(idle.part<Conveyor>(0).running)
         assertTrue(abs(idle.part<Ball>(1).pos.x - 232.0) < 2.0, "a conveyor with no motor is just a shelf")
-        val m = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0); part(PartType.MOTOR, 100.0, 300.0); belt(2, 0) }
+        val m = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0); part(PartType.MOTOR, 100.0, 300.0); belt(2, 0); part(PartType.OUTLET, 76.0, 308.0) }
         m.run(0.6)
         assertTrue(m.part<Ball>(1).pos.x > 260.0, "ball should be carried right, x=${m.part<Ball>(1).pos.x}")
-        val mf = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 260.0, 260.0); part(PartType.MOTOR, 100.0, 300.0, flipped = true); belt(2, 0) }
+        val mf = machine { part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 260.0, 260.0); part(PartType.MOTOR, 100.0, 300.0, flipped = true); belt(2, 0); part(PartType.OUTLET, 76.0, 308.0) }
         mf.run(0.6)
         assertTrue(mf.part<Ball>(1).pos.x < 240.0, "a flipped motor carries left, x=${mf.part<Ball>(1).pos.x}")
     }
 
     @Test
+    fun `a fan only blows when plugged in, next to an outlet or a switch that is on`() {
+        fun drift(setup: MachineBuilder.() -> Unit): Double {
+            val m = machine { part(PartType.FAN, 100.0, 300.0); part(PartType.BALLOON, 200.0, 320.0); setup() }
+            val b = m.part<Balloon>(1)
+            m.run(0.8)
+            return b.pos.x - 216.0
+        }
+        assertTrue(abs(drift {}) < 3.0, "an unplugged fan does nothing")
+        assertTrue(drift { part(PartType.OUTLET, 76.0, 308.0) } > 40.0, "touching an outlet plugs the fan in")
+        assertTrue(abs(drift { part(PartType.OUTLET, 40.0, 308.0) }) < 3.0, "an outlet further away does not")
+        assertTrue(abs(drift { part(PartType.SWITCH, 76.0, 300.0) }) < 3.0, "a switch that is off gives no power")
+        val on = machine { part(PartType.FAN, 100.0, 300.0); part(PartType.BALLOON, 200.0, 320.0); part(PartType.SWITCH, 76.0, 300.0) }
+        on.part<Switch>(2).trigger()
+        on.run(0.8)
+        assertTrue(on.part<Balloon>(1).pos.x - 216.0 > 40.0, "a switch that is on powers the fan next to it")
+        val wired = machine { part(PartType.FAN, 100.0, 300.0); part(PartType.BALLOON, 200.0, 320.0); part(PartType.OUTLET, 400.0, 300.0); wire(2, 0) }
+        wired.run(0.8)
+        assertTrue(wired.part<Balloon>(1).pos.x - 216.0 > 40.0, "a wire works from any distance")
+    }
+
+    @Test
+    fun `a motor needs power too, and shows in the belt`() {
+        val m = machine { part(PartType.MOTOR, 100.0, 300.0); part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0); belt(0, 1) }
+        m.run(0.8)
+        assertTrue(abs(m.part<Ball>(2).pos.x - 232.0) < 3.0, "unplugged motor: the belt stands still")
+        val plugged = machine { part(PartType.MOTOR, 100.0, 300.0); part(PartType.CONVEYOR, 200.0, 300.0); part(PartType.BOWLING_BALL, 216.0, 260.0); belt(0, 1); part(PartType.OUTLET, 76.0, 308.0) }
+        plugged.run(0.8)
+        assertTrue(plugged.part<Ball>(2).pos.x > 270.0, "plugged motor drives the belt")
+    }
+
+    @Test
+    fun `balloons on ropes, one cannot lift a cage, two hold it, three take it up`() {
+        fun cageAfter(n: Int): Double {
+            val m = machine {
+                for (i in 0 until 7) part(PartType.BRICK_WALL, i * 96.0, 384.0)
+                val cage = part(PartType.CAGE, 280.0, 328.0)
+                for (k in 0 until n) { val b = part(PartType.BALLOON, 232.0 + k * 56, 200.0); rope(b, cage) }
+            }
+            m.run(4.0)
+            return m.part<Cage>(7).worldBounds.minY
+        }
+        assertTrue(cageAfter(1) > 320.0, "one balloon leaves the cage on the floor")
+        assertTrue(cageAfter(2) > 300.0, "two balloons only hold it")
+        assertTrue(cageAfter(3) < 100.0, "three balloons carry it away, top=${cageAfter(3)}")
+        // a light bucket goes up with a single balloon
+        val m = machine { val b = part(PartType.BALLOON, 232.0, 100.0); val bucket = part(PartType.BUCKET, 224.0, 300.0); rope(b, bucket) }
+        m.run(3.0)
+        assertTrue(m.part<Bucket>(1).worldBounds.minY < 200.0, "a balloon lifts an empty bucket")
+    }
+
+    @Test
+    fun `an upside-down ramp slides a rising balloon sideways`() {
+        // rotation 2: the solid corner is top-right, the slope runs from top-left down to bottom-right
+        val m = machine { part(PartType.INCLINE, 200.0, 100.0, rotation = 2); part(PartType.BALLOON, 240.0, 300.0) }
+        val b = m.part<Balloon>(1)
+        m.run(5.0)
+        assertTrue(b.pos.x < 215.0 && b.pos.y < 90.0, "balloon should slide up to the high (left) tip and float on, pos=${b.pos}")
+        val mf = machine { part(PartType.INCLINE, 200.0, 100.0, flipped = true, rotation = 2); part(PartType.BALLOON, 192.0, 300.0) }
+        mf.run(5.0)
+        assertTrue(mf.part<Balloon>(1).pos.x > 250.0, "flipped: slides off to the right, x=${mf.part<Balloon>(1).pos.x}")
+        // quarter turns give tall wedges with the right-angle corner where expected
+        val v = tim.core.game.parts.PartFactory.create(Placement(PartType.INCLINE, 0.0, 0.0, rotation = 1), 0).let { (it as tim.core.game.parts.Incline).vertices() }
+        // a quarter turn clockwise: the tip moves to the top-right, the right angle to the top-left
+        assertEquals(setOf(tim.core.physics.Vec2(32.0, 0.0), tim.core.physics.Vec2(0.0, 64.0), tim.core.physics.Vec2(0.0, 0.0)), v.toSet())
+    }
+
+    @Test
     fun `fan blows a balloon away and barely moves a bowling ball`() {
-        val m = machine { floor(this); part(PartType.FAN, 100.0, 344.0); part(PartType.BALLOON, 160.0, 320.0) }
+        val m = machine { floor(this); part(PartType.FAN, 100.0, 344.0); part(PartType.BALLOON, 160.0, 320.0); part(PartType.OUTLET, 76.0, 352.0) }
         val balloon = m.part<Balloon>(8)
         m.run(1.0)
         assertTrue(balloon.pos.x > 220.0, "balloon should be blown right, x=${balloon.pos.x}")
-        val m2 = machine { floor(this); part(PartType.FAN, 100.0, 344.0); part(PartType.BOWLING_BALL, 160.0, 352.0) }
+        val m2 = machine { floor(this); part(PartType.FAN, 100.0, 344.0); part(PartType.BOWLING_BALL, 160.0, 352.0); part(PartType.OUTLET, 76.0, 352.0) }
         val ball = m2.part<Ball>(8)
         m2.run(1.0)
         assertTrue(ball.pos.x < 200.0, "bowling ball should hardly move, x=${ball.pos.x}")
@@ -119,7 +186,7 @@ class PartsBehaviourTest {
 
     @Test
     fun `fan blows out a candle`() {
-        val m = machine { floor(this); part(PartType.FAN, 200.0, 344.0); part(PartType.CANDLE, 260.0, 352.0) }
+        val m = machine { floor(this); part(PartType.FAN, 200.0, 344.0); part(PartType.CANDLE, 260.0, 352.0); part(PartType.OUTLET, 176.0, 352.0) }
         val candle = m.part<Candle>(8)
         m.run(0.2)
         assertFalse(candle.lit)

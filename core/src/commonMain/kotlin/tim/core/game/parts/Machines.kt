@@ -383,7 +383,7 @@ class Bucket(placement: Placement, index: Int) : Part(placement, index), Contain
     val pos: Vec2 get() = if (built) Vec2(bottom.pos.x, bottom.pos.y - (h - 5)) else Vec2(cx, y)
 
     override fun build(world: World) {
-        bottom = Body(PolygonShape.box(w / 2 - 2, 5.0), Vec2(cx, y + h - 5), BodyKind.DYNAMIC, mass = 10.0, restitution = 0.125, friction = 0.6, owner = this, tag = "bucket")
+        bottom = Body(PolygonShape.box(w / 2 - 2, 5.0), Vec2(cx, y + h - 5), BodyKind.DYNAMIC, mass = 6.0, restitution = 0.125, friction = 0.6, owner = this, tag = "bucket")
         bodies.add(world.add(bottom))
         for (side in listOf(-1.0, 1.0)) {
             val s = Body(PolygonShape.box(2.5, h / 2 - 2), Vec2(cx + side * (w / 2 - 3), cy), BodyKind.KINEMATIC, restitution = 0.125, friction = 0.4, owner = this, tag = "bucket-side")
@@ -712,7 +712,7 @@ class Rocket(placement: Placement, index: Int) : Part(placement, index), Activat
         if (!launched && litAt >= 0 && machine.time - litAt >= 0.6) {
             launched = true
             exhaust.enabled = true
-            body.mask = Category.ALL and Category.SOLID.inv() // flies through things once lit, like the original
+            // it stays solid: it pushes what is above it and stops at walls and floors
             machine.sounds.add("whoosh")
         }
         if (launched && body.pos.y < -80) { gone = true; body.enabled = false; exhaust.enabled = false }

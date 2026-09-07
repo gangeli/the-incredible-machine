@@ -29,9 +29,12 @@ abstract class Part(val placement: Placement, val index: Int) {
     val bodies = ArrayList<Body>()
     var built = false
 
-    /** Electric power state, refreshed each step from wires; parts with no wires default to on. */
-    var powered: Boolean = !placement.needsPower
-    var hasPowerInput: Boolean = placement.needsPower
+    /**
+     * Electric power state, refreshed each step. Appliances (fans, motors) start off and only run
+     * when plugged in: sitting next to an outlet or switched outlet, or wired to one.
+     */
+    var powered: Boolean = !LinkRules.appliance(placement.type)
+    var hasPowerInput: Boolean = LinkRules.appliance(placement.type)
 
     /** Convert a placement-local point (0..w, 0..h, unflipped) to world space, honouring flips. */
     fun local(lx: Double, ly: Double): Vec2 = Vec2(x + (if (flipped) w - lx else lx), y + ly)

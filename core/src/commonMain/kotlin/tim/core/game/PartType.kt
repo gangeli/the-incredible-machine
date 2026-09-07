@@ -26,8 +26,8 @@ enum class PartType(
     BRICK_WALL("Brick wall", 96.0, 16.0, PartCategory.STRUCTURE, rotatable = true),
     WOOD_WALL("Wood plank", 64.0, 16.0, PartCategory.STRUCTURE, rotatable = true),
     SMALL_WALL("Small brick", 32.0, 16.0, PartCategory.STRUCTURE, rotatable = true),
-    INCLINE("Ramp", 64.0, 32.0, PartCategory.STRUCTURE, flippable = true),
-    STEEP_INCLINE("Steep ramp", 48.0, 48.0, PartCategory.STRUCTURE, flippable = true),
+    INCLINE("Ramp", 64.0, 32.0, PartCategory.STRUCTURE, flippable = true, rotatable = true),
+    STEEP_INCLINE("Steep ramp", 48.0, 48.0, PartCategory.STRUCTURE, flippable = true, rotatable = true),
 
     SEESAW("Seesaw", 96.0, 32.0, PartCategory.MACHINE, flippable = true),
     TRAMPOLINE("Trampoline", 64.0, 24.0, PartCategory.MACHINE),
@@ -76,7 +76,11 @@ object LinkRules {
     fun beltSource(t: PartType) = t == PartType.MOTOR
     fun beltConsumer(t: PartType) = t == PartType.CONVEYOR
     fun wireSource(t: PartType) = t == PartType.SWITCH || t == PartType.OUTLET
-    fun wireConsumer(t: PartType) = t == PartType.FAN || t == PartType.CONVEYOR || t == PartType.MOTOR || t == PartType.FLASHLIGHT || t == PartType.SWITCH
+    fun wireConsumer(t: PartType) = t == PartType.FAN || t == PartType.MOTOR || t == PartType.SWITCH
+    /** Appliances that only run when plugged in (next to an outlet or switch, or wired to one). */
+    fun appliance(t: PartType) = t == PartType.FAN || t == PartType.MOTOR
+    /** How close (world units) an appliance must sit to an outlet to plug itself in, like the original. */
+    const val PLUG_REACH = 12.0
 
     fun kindOf(tool: PartType): LinkKind? = when (tool) { PartType.ROPE -> LinkKind.ROPE; PartType.BELT -> LinkKind.BELT; PartType.WIRE -> LinkKind.WIRE; else -> null }
     fun toolFor(kind: LinkKind): PartType = when (kind) { LinkKind.ROPE -> PartType.ROPE; LinkKind.BELT -> PartType.BELT; LinkKind.WIRE -> PartType.WIRE }

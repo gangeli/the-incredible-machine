@@ -66,13 +66,20 @@ class Wall(placement: Placement, index: Int) : Part(placement, index) {
     }
 }
 
-/** Wooden ramp. Unflipped it is high on the left and slopes down to the right. */
+/**
+ * Wooden ramp. Unflipped it is high on the left and slopes down to the right; flipping mirrors it
+ * and turning it upside down (two quarter turns) makes a slide for things that float upwards.
+ */
 class Incline(placement: Placement, index: Int) : Part(placement, index) {
-    /** Triangle vertices in world space: top of the high side, bottom-far, bottom-near. */
+    /** Triangle vertices in world space: acute tip, far end of the slope, right-angle corner. */
     fun vertices(): List<Vec2> {
-        val topX = if (flipped) x + w else x
-        val farX = if (flipped) x else x + w
-        return listOf(Vec2(topX, y), Vec2(farX, y + h), Vec2(topX, y + h))
+        val w0 = type.w; val h0 = type.h
+        var pts = listOf(Vec2(0.0, 0.0), Vec2(w0, h0), Vec2(0.0, h0))
+        if (flipped) pts = pts.map { Vec2(w0 - it.x, it.y) }
+        var bh = h0
+        var bw = w0
+        repeat(rotation % 4) { pts = pts.map { Vec2(bh - it.y, it.x) }; val t = bw; bw = bh; bh = t }
+        return pts.map { Vec2(x + it.x, y + it.y) }
     }
 
     override fun build(world: World) {
@@ -82,21 +89,22 @@ class Incline(placement: Placement, index: Int) : Part(placement, index) {
 
     override fun draw(p: Painter, t: Double) {
         val v = vertices()
-        val path = Path.polygon(v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y)
+        val a = v[0]; val b = v[1]; val c = v[2]
+        val path = Path.polygon(a.x, a.y, b.x, b.y, c.x, c.y)
         p.fillPath(path, Style.WOOD)
         // grain lines parallel to the slope, kept inside the triangle
         val grain = Colors.withAlpha(Style.WOOD_DARK, 0.55)
-        val n = maxOf(2, (h / 9).toInt())
+        val n = maxOf(2, (minOf(type.w, type.h) / 9).toInt())
         for (i in 1..n) {
-            val d = h * i / (n + 1.0)                       // vertical offset below the slope
-            val ax = v[0].x; val ay = v[0].y + d           // on the vertical side
-            val bx = v[0].x + (v[1].x - v[0].x) * (1 - d / h)  // where the shifted line meets the base
-            val by = v[1].y
-            p.line(ax, ay, bx, by, grain, 1.0)
+            val k = i / (n + 1.0)
+            p.line(a.x + (c.x - a.x) * k, a.y + (c.y - a.y) * k, b.x + (c.x - b.x) * k, b.y + (c.y - b.y) * k, grain, 1.0)
         }
-        // slope surface highlight and base shadow
-        p.line(v[0].x, v[0].y, v[1].x, v[1].y, Colors.withAlpha(Style.WHITE, 0.4), 2.2)
-        p.line(minOf(v[1].x, v[2].x) + 3, v[1].y - 1.5, maxOf(v[1].x, v[2].x) - 3, v[1].y - 1.5, Colors.withAlpha(Style.WOOD_DARK, 0.6), 2.0)
+        // slope highlight and a shadow along the base (the edge from the right angle to the far end)
+        p.line(a.x, a.y, b.x, b.y, Colors.withAlpha(Style.WHITE, 0.4), 2.2)
+        val mid = Vec2((b.x + c.x) / 2, (b.y + c.y) / 2)
+        val inward = (a - mid).let { val l = it.length; if (l > 0) Vec2(it.x / l * 1.5, it.y / l * 1.5) else Vec2.ZERO }
+        val along = (b - c).let { val l = it.length; if (l > 0) Vec2(it.x / l * 3, it.y / l * 3) else Vec2.ZERO }
+        p.line(c.x + inward.x + along.x, c.y + inward.y + along.y, b.x + inward.x - along.x, b.y + inward.y - along.y, Colors.withAlpha(Style.WOOD_DARK, 0.6), 2.0)
         p.strokePath(path, Style.OUTLINE, Style.LINE)
     }
 }

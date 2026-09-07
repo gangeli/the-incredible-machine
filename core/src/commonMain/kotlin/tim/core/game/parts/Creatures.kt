@@ -238,9 +238,14 @@ class Cat(placement: Placement, index: Int) : Creature(placement, index, 12.0, 5
     val sitting: Boolean get() = built && !walking && !airborne && startled <= 0
     val chasing: Boolean get() = walking
 
+    /** Seconds left of chewing after catching Mort: the cat stays put and keeps facing the same way. */
+    var munch = 0.0
+        private set
+
     override fun think() {
         if (isCaged()) { walking = false; return }
         if (startled > 0) { startled -= World.STEP; walking = false; return }
+        if (munch > 0) { munch -= World.STEP; walking = false; return }
         // idle habits: groom now and then, glance the other way after a while
         if (!walking) {
             nextGroom -= World.STEP
@@ -256,7 +261,7 @@ class Cat(placement: Placement, index: Int) : Creature(placement, index, 12.0, 5
             facing = if (mouse.pos.x > pos.x) 1.0 else -1.0
             walking = true
             groom = 0.0
-            if (abs(mouse.pos.x - pos.x) < 30) mouse.catch()
+            if (abs(mouse.pos.x - pos.x) < 30) { mouse.catch(); munch = 2.5; walking = false; groom = 0.0; nextGlance = 6.0 }
         } else walking = false
     }
 

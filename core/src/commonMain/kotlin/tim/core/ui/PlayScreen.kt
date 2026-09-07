@@ -62,6 +62,9 @@ private class Drag(
     var worldPos: Vec2,
     var valid: Boolean = false,
     var overTray: Boolean = false,
+    /** Where the part sat relative to the finger when it was picked up (world units), for existing parts. */
+    val grab: Vec2? = null,
+    val pickedAt: Double = 0.0,
 )
 
 /** State of the rope/belt/wire tool while the player is tapping the things to join. */
@@ -526,7 +529,13 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
     }
 
     /** A part may carry one rope, one belt, and (as a consumer) one wire. */
-    private fun alreadyLinked(idx: Int, kind: LinkKind): Boolean = board.links.any { it.kind == kind && (it.from == idx || it.to == idx) && !(kind == LinkKind.WIRE && it.from == idx) }
+    private fun alreadyLinked(idx: Int, kind: LinkKind): Boolean {
+        val type = board.all[idx].type
+        // outlets and switches feed any number of wires; cages, buckets, hooks and seesaws hold any number of ropes
+        if (kind == LinkKind.WIRE && LinkRules.wireSource(type) && type != PartType.SWITCH) return false
+        if (kind == LinkKind.ROPE && type != PartType.BALLOON) return false
+        return board.links.any { it.kind == kind && (it.from == idx || it.to == idx) && !(kind == LinkKind.WIRE && it.from == idx) }
+    }
 
     private fun linkAt(w: Vec2): Int {
         var best = -1; var bestD = 8.0
@@ -596,6 +605,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
         val m = machine
         for (b in buttons) b.attention = 0.0
         if (m == null) {
+            if (drag != null) updateDrag(lastTouch.x, lastTouch.y)
             playButton.attention = if (board.playerParts.isNotEmpty() || isFreeform) 1.0 else 0.0
             sparkle?.let { sp -> sparkleTime += dt; sp.update(dt); if (sparkleTime > 2.5) sparkle = null }
             idleTime += dt
@@ -686,7 +696,7 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
             if (hitIndex >= 0) {
                 val p = board.playerParts[hitIndex]
                 selected = hitIndex; selectedLink = -1
-                drag = Drag(p.type, hitIndex, p, p.flipped, p.rotation, Vec2(p.x, p.y))
+                drag = Drag(p.type, hitIndex, p, p.flipped, p.rotation, Vec2(p.x, p.y), grab = Vec2(p.x, p.y) - wpos, pickedAt = game.clock)
                 updateDrag(x, y)
                 game.play("pick")
                 return
@@ -754,7 +764,18 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
         val w = layout.toWorld(x, y - lift)
         val pw = if (d.rotation % 2 == 1) d.type.h else d.type.w
         val ph = if (d.rotation % 2 == 1) d.type.w else d.type.h
-        val px = snap(w.x - pw / 2); val py = snap(w.y - ph / 2)
+        var tx = w.x - pw / 2; var ty = w.y - ph / 2
+        // a part picked up from the board stays under the finger where it was grabbed and glides
+        // to the lifted, centred position instead of jumping there
+        val g = d.grab
+        if (g != null) {
+            val k = ((game.clock - d.pickedAt) / 0.25).coerceIn(0.0, 1.0)
+            val e = k * k * (3 - 2 * k)
+            val raw = layout.toWorld(x, y)
+            tx = (raw.x + g.x) * (1 - e) + tx * e
+            ty = (raw.y + g.y) * (1 - e) + ty * e
+        }
+        val px = snap(tx); val py = snap(ty)
         d.worldPos = Vec2(px, py)
         d.overTray = layout.tray.contains(Vec2(x, y))
         d.valid = !d.overTray && fits(Placement(d.type, px, py, d.flipped, d.rotation), d.existing)
@@ -843,6 +864,8 @@ class PlayScreen(game: Game, val level: Level, val levelIndex: Int, initialBoard
     fun winButtons(): Pair<AABB, AABB> = replayButton.rect to nextButton.rect
     fun topBarButtonRect(name: String): AABB = when (name) { "home" -> homeButton; "undo" -> undoButton; "clear" -> resetButton; "save" -> saveButton!!; "machines" -> machinesButton!!; else -> hintButton!! }.rect
     val dragging: Boolean get() = drag != null
+    /** Test hook: world position of the part being dragged. */
+    fun dragPosition(): Vec2? = drag?.worldPos
     /** Screen rectangle of a floating action button ("flip", "rotate", "delete", "unlink"), if visible. */
     fun actionButton(name: String): AABB? {
         drawSelectionButtons()

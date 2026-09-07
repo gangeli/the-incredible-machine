@@ -70,22 +70,22 @@ class LinksTest {
     }
 
     @Test
-    fun `parts marked as needing power stay off until wired or belted`() {
+    fun `appliances stay off until wired or plugged in, conveyors until belted`() {
         val m = machine {
             floor(this)
-            part(PartType.FAN, 300.0, 344.0)                                   // 7 plain
-            fixed.add(Placement(PartType.FAN, 400.0, 344.0, needsPower = true))  // 8
-            fixed.add(Placement(PartType.CONVEYOR, 100.0, 300.0, needsPower = true)) // 9
+            part(PartType.FAN, 300.0, 344.0)                                   // 7 nowhere near an outlet
+            part(PartType.FAN, 400.0, 344.0)                                   // 8
+            part(PartType.CONVEYOR, 100.0, 300.0)                              // 9
             part(PartType.OUTLET, 500.0, 352.0)                                // 10
             part(PartType.MOTOR, 200.0, 300.0)                                 // 11
         }
-        assertTrue(m.part<Fan>(7).running)
+        assertFalse(m.part<Fan>(7).running)
         assertFalse(m.part<Fan>(8).running)
         assertFalse(m.part<Conveyor>(9).running)
         val m2 = machine {
             floor(this)
-            val fan = fixed.let { it.add(Placement(PartType.FAN, 400.0, 344.0, needsPower = true)); it.size - 1 }  // 7
-            val conv = fixed.let { it.add(Placement(PartType.CONVEYOR, 100.0, 300.0, needsPower = true)); it.size - 1 } // 8
+            val fan = part(PartType.FAN, 400.0, 344.0)        // 7
+            val conv = part(PartType.CONVEYOR, 100.0, 300.0)  // 8
             val outlet = part(PartType.OUTLET, 500.0, 352.0)   // 9
             val motor = part(PartType.MOTOR, 200.0, 300.0)     // 10
             wire(outlet, fan); wire(outlet, motor); belt(motor, conv)
@@ -100,9 +100,10 @@ class LinksTest {
         val m = machine {
             floor(this)
             val motor = part(PartType.MOTOR, 100.0, 344.0, flipped = true)          // 7 faces left
-            val conv = fixed.let { it.add(Placement(PartType.CONVEYOR, 240.0, 300.0, flipped = false, needsPower = true)); it.size - 1 } // 8 would face right
+            val conv = part(PartType.CONVEYOR, 240.0, 300.0)                          // 8 would face right
             belt(motor, conv)
             part(PartType.BOWLING_BALL, 272.0, 260.0) // 9
+            part(PartType.OUTLET, 76.0, 352.0)        // 10 plugs the motor in
         }
         m.run(0.8)
         assertTrue(m.part<Ball>(9).pos.x < 280, "ball should be carried left by the motor's direction, x=${m.part<Ball>(9).pos.x}")

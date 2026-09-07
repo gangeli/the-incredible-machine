@@ -99,7 +99,11 @@ open class Ball(placement: Placement, index: Int) : Part(placement, index) {
 
 /** Balloon: buoyant, pops on flame, sharp things and explosions. Ropes tie to its knot. */
 class Balloon(placement: Placement, index: Int) : Part(placement, index), Activatable {
-    companion object { const val R = 15.0; const val LIFT = 351.0 }
+    companion object {
+        const val R = 15.0; const val LIFT = 351.0
+        /** Upward pull a balloon gives whatever it is tied to: half a cage's weight, so two balloons hold a cage and three lift it. */
+        const val PULL = 3500.0
+    }
     var body: Body? = null
     var popped = false
     private var popTime = -1.0
@@ -108,7 +112,8 @@ class Balloon(placement: Placement, index: Int) : Part(placement, index), Activa
     val color = Style.RED
 
     override fun build(world: World) {
-        val b = Body(CircleShape(R), Vec2(x + 16, y + 15), BodyKind.DYNAMIC, mass = 0.1, restitution = 0.25, friction = 0.4, owner = this, tag = "BALLOON")
+        // slippery, so it slides along ceilings and upside-down ramps instead of sticking
+        val b = Body(CircleShape(R), Vec2(x + 16, y + 15), BodyKind.DYNAMIC, mass = 0.1, restitution = 0.25, friction = 0.05, owner = this, tag = "BALLOON")
         b.rollingFriction = 0.2
         b.linearDamping = 1.75
         body = world.add(b)
@@ -135,6 +140,8 @@ class Balloon(placement: Placement, index: Int) : Part(placement, index), Activa
         if (popped) return
         popped = true
         popTime = machine.time
+        // a string tied to a popped balloon goes slack and falls, like the original's severed end
+        for (r in machine.ropesOf(this)) machine.cutRope(r)
         body?.enabled = false
         machine.effects.add(Effect(Effect.Kind.POP, pos, 0.35, 1.0, color))
         machine.sounds.add("pop")

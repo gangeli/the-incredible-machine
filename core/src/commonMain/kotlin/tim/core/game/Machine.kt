@@ -1,5 +1,6 @@
 package tim.core.game
 
+import tim.core.game.parts.Balloon
 import tim.core.physics.AABB
 import tim.core.physics.Body
 import tim.core.physics.Rope
@@ -44,6 +45,11 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
     val ropes = ArrayList<RopeLink>()
     val belts = ArrayList<Link>()
     val wires = ArrayList<Link>()
+    /**
+     * Appliances plugged in by proximity: an appliance touching an outlet or switch (within
+     * [LinkRules.PLUG_REACH]) draws power from it without a wire, as in the original game.
+     */
+    val autoPlugs: Map<Int, Int>
     val effects = ArrayList<Effect>()
     /** Sound cues raised during the last step, consumed by the UI layer. */
     val sounds = ArrayList<String>()
@@ -62,6 +68,7 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
             LinkKind.BELT -> belts.add(l)
             LinkKind.WIRE -> { wires.add(l); parts.getOrNull(l.to)?.hasPowerInput = true }
         }
+        autoPlugs = findAutoPlugs()
         refreshPower()
     }
 
@@ -139,12 +146,28 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         return true
     }
 
+    private fun findAutoPlugs(): Map<Int, Int> {
+        val m = HashMap<Int, Int>()
+        for (p in parts) {
+            if (!LinkRules.appliance(p.type) || wires.any { it.to == p.index }) continue
+            val box = AABB(p.x, p.y, p.x + p.w, p.y + p.h).expanded(LinkRules.PLUG_REACH)
+            val src = parts.filter { LinkRules.wireSource(it.type) && box.overlaps(AABB(it.x, it.y, it.x + it.w, it.y + it.h)) }
+                .minByOrNull { (Vec2(it.cx, it.cy) - Vec2(p.cx, p.cy)).lengthSq }
+            if (src != null) m[p.index] = src.index
+        }
+        return m
+    }
+
+    /** True when an appliance has any power source at all (wire or neighbouring outlet). */
+    fun isPluggedIn(part: Part): Boolean = wires.any { it.to == part.index } || autoPlugs.containsKey(part.index)
+
     /** Recompute electric power for every part from outlets, switches and wires. */
     fun refreshPower() {
         // iterate a few times so chains (outlet -> switch -> fan) settle
         repeat(4) {
             for (p in parts) if (p.hasPowerInput) {
-                p.powered = wires.any { it.to == p.index && (parts.getOrNull(it.from)?.powerOutput == true) }
+                p.powered = wires.any { it.to == p.index && (parts.getOrNull(it.from)?.powerOutput == true) } ||
+                    (autoPlugs[p.index]?.let { parts.getOrNull(it)?.powerOutput } == true)
             }
         }
         for (l in belts) {
@@ -154,9 +177,25 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         }
     }
 
+    /** A balloon on a rope hauls on the other end once the rope is stretched and the balloon is above it. */
+    private fun balloonLift() {
+        for (r in ropes) {
+            if (r.cut) continue
+            val fromBalloon = r.from is Balloon; val toBalloon = r.to is Balloon
+            if (fromBalloon == toBalloon) continue
+            val balloon = if (fromBalloon) r.from as Balloon else r.to as Balloon
+            if (balloon.popped) continue
+            val other = if (fromBalloon) r.rope.b else r.rope.a
+            if (!other.isDynamic) continue
+            val stretched = r.rope.length() >= r.rope.maxLength - 6.0
+            if (stretched && balloon.pos.y < other.pos.y) other.applyForce(Vec2(0.0, -Balloon.PULL * world.airPressure))
+        }
+    }
+
     fun step() {
         sounds.clear()
         refreshPower()
+        balloonLift()
         for (p in allParts) p.preStep()
         world.step()
         for (ev in world.contactEvents) {
@@ -223,7 +262,36 @@ class Machine(val board: Board, val width: Double = WIDTH, val height: Double = 
         LinkKind.WIRE -> listOfNotNull(parts.getOrNull(l.from)?.plugPoint(), parts.getOrNull(l.to)?.plugPoint())
     }
 
+    /** Short cords for appliances plugged into a neighbouring outlet, and a dangling plug for ones with no power. */
+    private fun drawPlugs(p: Painter) {
+        for (part in parts) {
+            if (!LinkRules.appliance(part.type)) continue
+            val a = part.plugPoint()
+            val src = autoPlugs[part.index]?.let { parts.getOrNull(it) }
+            if (src != null) {
+                val b = src.plugPoint()
+                val path = tim.core.render.Path()
+                path.moveTo(a.x, a.y)
+                path.quadTo((a.x + b.x) / 2, maxOf(a.y, b.y) + 6, b.x, b.y)
+                p.strokePath(path, Style.OUTLINE, 3.2)
+                p.strokePath(path, Style.GREY_DARK, 1.6)
+                p.fillRoundRect(b.x - 4, b.y - 3, 8.0, 6.0, 1.5, Style.OUTLINE)
+            } else if (wires.none { it.to == part.index }) {
+                // unplugged: a loose cord with its plug hanging off the side
+                val path = tim.core.render.Path()
+                val ex = a.x + 14 * part.dir; val ey = a.y + 12
+                path.moveTo(a.x, a.y)
+                path.quadTo(a.x + 10 * part.dir, a.y + 14, ex, ey)
+                p.strokePath(path, Style.OUTLINE, 3.0)
+                p.strokePath(path, Style.GREY, 1.5)
+                p.fillRoundRect(ex - 4, ey - 2, 8.0, 6.0, 1.5, Style.OUTLINE)
+                p.fillRect(ex - 2, ey + 4, 1.5, 3.0, Style.OUTLINE); p.fillRect(ex + 1, ey + 4, 1.5, 3.0, Style.OUTLINE)
+            }
+        }
+    }
+
     private fun drawWires(p: Painter) {
+        drawPlugs(p)
         for (l in wires) {
             val a = parts.getOrNull(l.from)?.plugPoint() ?: continue
             val b = parts.getOrNull(l.to)?.plugPoint() ?: continue

@@ -9,6 +9,7 @@ import tim.core.game.PartType
 import tim.core.physics.Vec2
 import tim.desktop.Java2DPainter
 import tim.desktop.Snap
+import kotlin.math.abs
 
 /** Behaviour of the play screen's overlays and tray gestures. */
 class UiFixesTest {
@@ -73,6 +74,30 @@ class UiFixesTest {
         release(g, target.x, target.y)
         assertEquals(1, ps.board.playerParts.size)
         assertEquals(type, ps.board.playerParts[0].type)
+    }
+
+    @Test
+    fun `a part picked up from the board stays where it was grabbed and then glides up`() {
+        val g = newGame()
+        g.startLevel(0); g.update(0.02)
+        val ps = g.screen as PlayScreen
+        val type = ps.level.tray[0].type
+        val target = ps.layout.toScreen(Vec2(300.0, 200.0))
+        dragTile(g, ps, type, Vec2(target.x - 200, target.y), target)
+        val placed = ps.board.playerParts[0]
+        // grab it near its bottom-right corner
+        val grabWorld = Vec2(placed.x + placed.w - 6, placed.y + placed.h - 6)
+        val grab = ps.layout.toScreen(grabWorld)
+        press(g, grab.x, grab.y)
+        g.touch(TouchEvent(TouchAction.MOVE, grab.x + 3, grab.y + 3)); g.update(0.001)
+        val start = ps.dragPosition() ?: error("should be dragging")
+        assertTrue(abs(start.x - placed.x) <= 4.0 && abs(start.y - placed.y) <= 4.0, "no jump at pickup: $start vs ${placed.x},${placed.y}")
+        // holding still, the part glides to the lifted position above the finger
+        repeat(30) { g.update(0.02) }
+        val later = ps.dragPosition()!!
+        val liftedCentre = ps.layout.toWorld(grab.x + 3, grab.y + 3 - 48 * g.u)
+        assertTrue(abs(later.x + placed.w / 2 - liftedCentre.x) <= 4.0 && abs(later.y + placed.h / 2 - liftedCentre.y) <= 4.0, "should end centred above the finger: $later")
+        release(g, grab.x + 3, grab.y + 3)
     }
 
     @Test

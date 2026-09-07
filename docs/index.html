@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Incredible Machine · play in your browser or on a tablet</title>
-<meta name="description" content="A friendly remake of the classic contraption puzzle game: 44 puzzles, free play, ropes and pulleys, Mort the mouse and Pokey the cat. Play in the browser, add it to your home screen, or install the Android APK.">
+<meta name="description" content="A friendly remake of the classic contraption puzzle game: 46 puzzles, free play, ropes and pulleys, Mort the mouse and Pokey the cat. Play in the browser, add it to your home screen, or install the Android APK.">
 <meta property="og:title" content="The Incredible Machine">
-<meta property="og:description" content="Build crazy contraptions. 44 puzzles and free play, in your browser or on a tablet. Free, open source, no ads.">
+<meta property="og:description" content="Build crazy contraptions. 46 puzzles and free play, in your browser or on a tablet. Free, open source, no ads.">
 <meta property="og:image" content="https://gangeli.github.io/the-incredible-machine/art/og.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -47,7 +47,7 @@
   .btn.ghost { background:var(--cream); color:var(--ink); }
   .btn svg { width:26px; height:26px; }
   .fine { margin-top:22px; color:var(--navy); font-size:.95rem; }
-  .float { position:absolute; pointer-events:none; animation: bob 5s ease-in-out infinite; }
+  .float { z-index:0; pointer-events:none; position:absolute; pointer-events:none; animation: bob 5s ease-in-out infinite; }
   .float img { display:block; height:auto; filter: drop-shadow(0 6px 0 rgba(30,42,58,.15)); }
   @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-14px) } }
   @media (prefers-reduced-motion: reduce) { .float { animation:none; } }
@@ -77,6 +77,8 @@
   details img { width:100%; height:auto; border-radius:14px; border:3px solid var(--ink); margin-top:14px; }
   footer { text-align:center; color:var(--navy); padding:36px 20px 44px; font-size:.95rem; }
   footer a { color:var(--navy); }
+  .hero .wrap { position:relative; z-index:1; }
+  .float { z-index:0; pointer-events:none; }
 </style>
 </head>
 <body>
@@ -84,18 +86,19 @@
 <header class="hero">
   <div class="float side" style="left:4%; top:14%; animation-delay:-1s"><img src="art/parts/balloon.svg" width="88" alt=""></div>
   <div class="float side" style="right:6%; top:10%; animation-delay:-2.5s"><img src="art/parts/basketball.svg" width="84" alt=""></div>
-  <div class="float side" style="left:7%; bottom:16%; animation-delay:-3s"><img src="art/parts/mouse.svg" width="96" alt=""></div>
-  <div class="float side" style="right:4%; bottom:26%; animation-delay:-.5s"><img src="art/parts/cat.svg" width="150" alt=""></div>
-  <div class="float side" style="left:18%; top:58%; animation-delay:-4s"><img src="art/parts/star.svg" width="64" alt=""></div>
-  <div class="float side" style="right:20%; top:52%; animation-delay:-1.8s"><img src="art/parts/rocket.svg" width="56" alt=""></div>
+  <div class="float side" style="left:6%; bottom:4%; animation-delay:-3s"><img src="art/parts/mouse.svg" width="96" alt=""></div>
+  <div class="float side" style="right:3%; bottom:3%; animation-delay:-.5s"><img src="art/parts/cat.svg" width="150" alt=""></div>
+  <div class="float side" style="left:12%; top:30%; animation-delay:-4s"><img src="art/parts/star.svg" width="64" alt=""></div>
+  <div class="float side" style="right:15%; top:26%; animation-delay:-1.8s"><img src="art/parts/rocket.svg" width="56" alt=""></div>
   <div class="wrap">
     <h1><img class="logo" src="art/logo.svg" alt="The Incredible Machine"></h1>
     <p class="tag">Build crazy contraptions out of ramps, seesaws, cannons, balloons, a cat and a mouse. A friendly remake of the 1993 classic, made for small hands.</p>
-    <div class="cta">
-      <a class="btn" href="play/"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M14 8l24 16-24 16z" fill="currentColor"/></svg>Play now</a>
-      <a class="btn purple" href="play/#install"><svg viewBox="0 0 48 48" fill="currentColor"><path d="M20 4h8v18h9L24 36 11 22h9z"/><path d="M6 32h7v6h22v-6h7v12H6z"/></svg>Install the app</a>
-      <a class="btn blue" href="app-release.apk" download><svg viewBox="0 0 48 48" fill="currentColor"><path d="M10 18a14 14 0 0128 0v2H10zM10 22h28v14a3 3 0 01-3 3H13a3 3 0 01-3-3z"/><circle cx="18" cy="14" r="2" fill="#fff"/><circle cx="30" cy="14" r="2" fill="#fff"/></svg>Android APK</a>
+    <div class="cta" id="hero-actions">
+      <a class="btn" id="act-play" href="play/"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M14 8l24 16-24 16z" fill="currentColor"/></svg><span>Play in your browser</span></a>
+      <a class="btn purple" id="act-pwa" href="play/#install"><svg viewBox="0 0 48 48" fill="currentColor"><path d="M20 4h8v18h9L24 36 11 22h9z"/><path d="M6 32h7v6h22v-6h7v12H6z"/></svg><span>Add to home screen</span></a>
+      <a class="btn blue" id="act-apk" href="app-release.apk" download><svg viewBox="0 0 48 48" fill="currentColor"><path d="M10 18a14 14 0 0128 0v2H10zM10 22h28v14a3 3 0 01-3 3H13a3 3 0 01-3-3z"/><circle cx="18" cy="14" r="2" fill="#fff"/><circle cx="30" cy="14" r="2" fill="#fff"/></svg><span>Download for Android (APK)</span></a>
     </div>
+    <p class="fine" id="act-note">Same game three ways: play right here, add it to your home screen as a web app, or install the native Android app.</p>
     <p class="fine">Free and open source · no ads, no accounts, no internet needed once loaded · the whole game is about 230 KB.</p>
   </div>
 </header>
@@ -142,9 +145,9 @@
     <div class="wrap">
       <h2>What's inside</h2>
       <div class="grid">
-        <div class="card tint-y"><div class="ic"><img src="art/parts/star.svg" alt=""></div><h3>44 puzzles</h3><p>From "put the ramp under the ball" to chain reactions with switches, wires, motors, belts, buckets and pulleys. Every goal fits in one sentence.</p></div>
+        <div class="card tint-y"><div class="ic"><img src="art/parts/star.svg" alt=""></div><h3>46 puzzles</h3><p>From "put the ramp under the ball" to chain reactions with switches, wires, motors, belts, buckets and pulleys. Every goal fits in one sentence.</p></div>
         <div class="card tint-o"><div class="ic"><img src="art/parts/seesaw.svg" alt=""></div><h3>Free play</h3><p>Every part, no goal, category tabs in the tray. Build the machine you want and press Play. Your build is always kept, and Save adds it to your own gallery of machines.</p></div>
-        <div class="card tint-p"><div class="ic"><img src="art/parts/pulley.svg" alt=""></div><h3>Ropes, belts &amp; wires</h3><p>Tap the tool, then the two things to join. Ropes run over pulleys, candles burn them, scissors cut them.</p></div>
+        <div class="card tint-p"><div class="ic"><img src="art/parts/pulley.svg" alt=""></div><h3>Ropes, belts &amp; wires</h3><p>Tap the tool, then the two things to join. Ropes run over pulleys and balloons haul on them, belts carry a motor's turn to a conveyor, and fans and motors only run when plugged in: park them next to an outlet or wire them to one.</p></div>
         <div class="card tint-r"><div class="ic"><img src="art/parts/cat.svg" alt=""></div><h3>Mort &amp; Pokey</h3><p>A mouse who scurries after cheese and a cat who pounces when he sees him. Cage the cat, feed the mouse.</p></div>
         <div class="card tint-g"><div class="ic"><img src="art/parts/basketball.svg" alt=""></div><h3>Made for small hands</h3><p>Big parts that snap into place, forgiving drops, a giant Play button, a hint bulb, and a nudge on the first puzzles.</p></div>
         <div class="card tint-b"><div class="ic"><img src="art/parts/candle.svg" alt=""></div><h3>Tiny and private</h3><p>All art is vector, all sounds are synthesised. About 230 KB in the browser, 110 KB as an APK. Nothing leaves the device.</p></div>
@@ -169,7 +172,7 @@
       </div>
       <details style="margin-top:22px">
         <summary>Every puzzle with its solution in place (built by the automated playtest on each push)</summary>
-        <img src="screenshots/all-levels-solved.png" alt="All 44 puzzles solved">
+        <img src="screenshots/all-levels-solved.png" alt="All 46 puzzles solved">
       </details>
     </div>
   </section>
@@ -181,7 +184,7 @@
         <ol class="steps">
           <li>Pick a puzzle. The goal is written at the top in one sentence, for example <em>Get the ball into the bucket</em>.</li>
           <li>Drag parts from the tray on the right onto the playfield. Parts snap into place; a green frame means the spot is free, a red frame means it is taken.</li>
-          <li>Tap a placed part to flip it, turn it, or throw it back in the tray.</li>
+          <li>Tap a placed part to flip it, turn it (ramps can even go upside down, to slide a rising balloon sideways), or throw it back in the tray.</li>
           <li>To tie a rope (or a belt or a wire), tap the rope in the tray, then tap the two things to join. For a rope you can tap pulleys in between. Tap a rope to cut it again.</li>
           <li>Press the big green <strong>Play</strong> button and watch. Press the red <strong>Stop</strong> button to try something else.</li>
           <li>Stuck? The light-bulb button shows where the parts should go for a few seconds.</li>
@@ -192,7 +195,7 @@
 
   <section id="apk">
     <div class="wrap">
-      <h2>Installing the Android APK</h2>
+      <h2>Installing the Android app (APK)</h2>
       <div class="card">
         <p>The APK is the same game as a native Android app. It is not on the Play Store because this is a hobby project, so Android asks for permission once.</p>
         <ol class="steps">
@@ -219,5 +222,37 @@
   </section>
 </main>
 <footer>MIT licensed · Not affiliated with Sierra or Dynamix · <a href="play/">Play</a> · <a href="app-release.apk" download>APK</a> · <a href="https://github.com/gangeli/the-incredible-machine">GitHub</a></footer>
+<script>
+  // Put the right install path first: Android tablets get the APK, iPad and iPhone the Safari
+  // home-screen route, computers the browser app. Everything stays reachable further down.
+  (function () {
+    var ua = navigator.userAgent || '';
+    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var android = /Android/i.test(ua);
+    var actions = document.getElementById('hero-actions');
+    var play = document.getElementById('act-play'), pwa = document.getElementById('act-pwa'), apk = document.getElementById('act-apk');
+    var note = document.getElementById('act-note');
+    if (!actions || !play || !pwa || !apk || !note) return;
+    function label(btn, text) { var sp = btn.querySelector('span'); if (sp) sp.textContent = text; }
+    function first(btn) { btn.className = 'btn'; actions.insertBefore(btn, actions.firstChild); }
+    if (android) {
+      first(apk); label(apk, 'Install the app');
+      play.className = 'btn blue'; label(play, 'Play in your browser');
+      pwa.className = 'btn ghost'; label(pwa, 'Add the web version to home screen');
+      note.textContent = 'Install downloads the Android app (about 110 KB). Open the download, allow installs from Chrome when asked, then tap Install. The steps are right below.';
+      var steps = document.getElementById('apk'); var hero = document.querySelector('header');
+      if (steps && hero && hero.parentNode) hero.parentNode.insertBefore(steps, hero.nextSibling);
+    } else if (ios) {
+      first(play); label(play, 'Play now');
+      pwa.className = 'btn purple'; label(pwa, 'Put it on the home screen');
+      apk.className = 'btn ghost';
+      note.textContent = 'Open the game in Safari, tap Share, then "Add to Home Screen": it becomes a full-screen app with its own icon that works offline.';
+    } else {
+      first(play); label(play, 'Play now');
+      label(pwa, 'Install as an app');
+      note.textContent = 'Play right here, or install it from Chrome or Edge as an app on this computer. The APK is for Android tablets and phones.';
+    }
+  })();
+</script>
 </body>
 </html>
