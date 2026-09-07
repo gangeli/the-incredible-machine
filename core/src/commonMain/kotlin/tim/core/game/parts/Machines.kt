@@ -1004,16 +1004,20 @@ class Motor(placement: Placement, index: Int) : Part(placement, index) {
     override fun postStep() { if (powered) spin += 0.3 }
     override fun draw(p: Painter, t: Double) {
         val sp = if (built) spin else t * 5
+        p.save()
+        // flipped motors are drawn mirrored: the wheel moves to the other side and spins the other way
+        if (flipped) { p.translate(x + w, 0.0); p.scale(-1.0, 1.0); p.translate(-x, 0.0) }
         Draw.outlinedRoundRect(p, x + 2, y + h - 6, w - 4, 6.0, 2.0, Style.STEEL)
         Draw.outlinedRoundRect(p, x + 4, y + 10, w - 20, h - 16, 4.0, Style.RED)
         p.fillRect(x + 8, y + 16, w - 28, 3.0, Style.RED_DARK)
         p.fillRect(x + 8, y + 22, w - 28, 3.0, Style.RED_DARK)
-        val hub = beltHub()
-        Draw.outlinedCircle(p, hub.x, hub.y, 9.0, Style.GREY_LIGHT)
-        p.save(); p.translate(hub.x, hub.y); p.rotate(sp)
+        val hx = x + w - 12; val hy = y + 16
+        Draw.outlinedCircle(p, hx, hy, 9.0, Style.GREY_LIGHT)
+        p.save(); p.translate(hx, hy); p.rotate(sp)
         p.line(-6.0, 0.0, 6.0, 0.0, Style.OUTLINE, 2.0); p.line(0.0, -6.0, 0.0, 6.0, Style.OUTLINE, 2.0)
         p.restore()
         p.fillCircle(x + 11, y + 15, 3.0, if (powered) Style.GREEN else Style.GREY)
         p.strokeCircle(x + 11, y + 15, 3.0, Style.OUTLINE, 1.2)
+        p.restore()
     }
 }

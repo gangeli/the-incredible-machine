@@ -45,7 +45,7 @@ enum class PartType(
     BELLOWS("Bellows", 64.0, 32.0, PartCategory.MACHINE, flippable = true),
     PULLEY("Pulley", 16.0, 16.0, PartCategory.MACHINE),
     HOOK("Hook", 16.0, 16.0, PartCategory.MACHINE),
-    MOTOR("Electric motor", 48.0, 40.0, PartCategory.MACHINE),
+    MOTOR("Electric motor", 48.0, 40.0, PartCategory.MACHINE, flippable = true),
 
     MOUSE("Mort the mouse", 24.0, 16.0, PartCategory.CREATURE, flippable = true),
     CAT("Pokey the cat", 48.0, 32.0, PartCategory.CREATURE, flippable = true),
