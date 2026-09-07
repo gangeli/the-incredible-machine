@@ -14,6 +14,7 @@ class MachineNamerTest {
         assertEquals(MachineNamer.name(a), MachineNamer.name(moved))
         assertEquals(MachineNamer.name(a), MachineNamer.name(a))
         assertNotEquals(board(PartType.BASKETBALL), board(PartType.BASKETBALL, PartType.BALLOON))
+        assertEquals(board(PartType.BASKETBALL, PartType.BASKETBALL, PartType.BASKETBALL), board(PartType.BASKETBALL, PartType.BASKETBALL, PartType.BASKETBALL, PartType.BASKETBALL), "a fourth of the same part keeps the name")
         val all = PartType.values().filter { !it.isTool }
         for (n in 1..all.size) {
             val name = MachineNamer.name(all.take(n))

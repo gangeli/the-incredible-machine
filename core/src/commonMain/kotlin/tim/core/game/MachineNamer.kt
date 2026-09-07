@@ -135,7 +135,8 @@ object MachineNamer {
         val nounWords = wordsOf(noun)
         val subjects = ranked.filter { !clashes(it, noun) }
         val subject = subjects.firstOrNull()
-        val second = subjects.drop(1).firstOrNull { !clashes(it, subject ?: "") }
+        // a partner subject: walls are too dull to share the billing ("Mort and Brick Adventure")
+        val second = subjects.drop(1).firstOrNull { it != "Brick" && it != "Plank" && !clashes(it, subject ?: "") }
         val owner = when { has(PartType.MOUSE) -> "Mort's"; has(PartType.CAT) -> "Pokey's"; else -> null }
         val ownerFree = subjects.firstOrNull { it != "Mort" && it != "Pokey" }
 
@@ -178,10 +179,13 @@ object MachineNamer {
         return wa.any { x -> wb.any { y -> x == y || (x.length >= 3 && y.length >= 3 && (x.contains(y) || y.contains(x))) } }
     }
 
-    /** Order-independent hash of the mix of parts and links, so moving things about keeps the name. */
+    /**
+     * Order-independent hash of the mix of parts and links, so moving things about keeps the name.
+     * Counts are bucketed (one, a couple, several) so a fourth ball does not rename the machine.
+     */
     private fun hashOf(counts: Map<PartType, Int>, links: List<LinkKind>): Int {
         var h = 17
-        for (t in PartType.values()) { val n = counts[t] ?: 0; if (n > 0) h = h * 31 + t.ordinal * 7919 + n }
+        for (t in PartType.values()) { val n = counts[t] ?: 0; if (n > 0) h = h * 31 + t.ordinal * 7919 + minOf(n, 3) }
         for (k in LinkKind.values()) h = h * 31 + links.count { it == k }
         return h
     }
