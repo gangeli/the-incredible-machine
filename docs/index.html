@@ -3,98 +3,220 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Incredible Machine for tablets</title>
+<title>The Incredible Machine · play in your browser or on a tablet</title>
+<meta name="description" content="A friendly remake of the classic contraption puzzle game: 44 puzzles, free play, ropes and pulleys, Mort the mouse and Pokey the cat. Play in the browser, add it to your home screen, or install the Android APK.">
+<meta property="og:title" content="The Incredible Machine">
+<meta property="og:description" content="Build crazy contraptions. 44 puzzles and free play, in your browser or on a tablet. Free, open source, no ads.">
+<meta property="og:image" content="https://gangeli.github.io/the-incredible-machine/art/og.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="play/icon-192.png">
+<link rel="apple-touch-icon" href="play/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { --navy:#2B3A67; --yellow:#FFD166; --red:#E84855; --green:#5CB85C; --blue:#3D8BFD; --cream:#FFF6E5; --ink:#1E2A3A; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: linear-gradient(180deg,#8EC5FC 0%,#E0C3FC 100%) fixed; }
-  header { text-align:center; padding: 48px 16px 24px; }
-  h1 { font-size: clamp(2.2rem, 6vw, 4rem); margin: 0; line-height: 1.05; text-shadow: 0 3px 0 rgba(0,0,0,.25); }
-  h1 .a { color: white; display:block; font-size: .45em; }
-  h1 .b { color: var(--yellow); display:block; }
-  h1 .c { color: var(--red); display:block; }
-  .tag { color: var(--navy); font-weight: 600; margin-top: 12px; }
-  main { max-width: 900px; margin: 0 auto; padding: 0 16px 64px; }
-  .card { background: var(--cream); border: 3px solid var(--ink); border-radius: 22px; padding: 24px 28px; margin: 20px 0; box-shadow: 0 6px 0 rgba(0,0,0,.25); }
-  .btn { display:inline-block; background: var(--green); color:white; font-weight:800; font-size:1.4rem; text-decoration:none; padding: 16px 32px; border-radius: 18px; border: 3px solid var(--ink); box-shadow: 0 6px 0 rgba(0,0,0,.3); }
-  .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.3); }
-  .btn.alt { background: var(--blue); font-size: 1.05rem; padding: 12px 20px; }
-  ol li { margin: 10px 0; }
-  code { background: rgba(0,0,0,.08); padding: 2px 6px; border-radius: 6px; }
-  .shots { display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
-  .shots img { width:100%; border-radius: 14px; border: 3px solid var(--ink); background:white; }
-  footer { text-align:center; color: var(--navy); padding: 24px; font-size: .9rem; }
-  .small { font-size: .9rem; color: #444; }
+  :root {
+    --navy:#2B3A67; --ink:#1E2A3A; --cream:#FFF6E5; --yellow:#FFD166; --red:#E84855; --green:#5CB85C; --blue:#3D8BFD;
+    --purple:#8E5CD9; --orange:#F4A261; --sky:#8EC5FC; --lilac:#E0C3FC; --paper:#F7F3EA;
+    --radius:22px; --shadow: 0 6px 0 rgba(30,42,58,.28);
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; color:var(--ink); background:var(--paper); font-family:"Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-weight:600; line-height:1.5; }
+  h1,h2,h3 { font-family:"Fredoka", "Nunito", system-ui, sans-serif; font-weight:700; line-height:1.1; margin:0; letter-spacing:.2px; }
+  h2 { font-size:clamp(1.7rem, 3.4vw, 2.4rem); color:var(--navy); margin-bottom:14px; }
+  h3 { font-size:1.25rem; margin-bottom:6px; }
+  p { margin:.5em 0; }
+  a { color:var(--blue); }
+  .wrap { max-width:1060px; margin:0 auto; padding:0 20px; }
+  section { padding:56px 0; }
+  section + section { border-top:3px dashed rgba(30,42,58,.12); }
+
+  /* hero */
+  .hero { position:relative; overflow:hidden; background:linear-gradient(180deg, var(--sky) 0%, var(--lilac) 100%); padding:56px 0 96px; text-align:center; }
+  .hero::after { content:""; position:absolute; left:0; right:0; bottom:0; height:22px; background:repeating-linear-gradient(90deg, #C9563C 0 40px, #8E3A28 40px 43px); border-top:4px solid var(--ink); }
+  .hero .logo { width:min(760px, 92vw); height:auto; display:block; margin:0 auto; filter: drop-shadow(0 10px 0 rgba(30,42,58,.15)); }
+  .tag { font-size:clamp(1.1rem, 2.3vw, 1.45rem); color:var(--navy); max-width:640px; margin:18px auto 30px; font-weight:700; }
+  .cta { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; gap:10px; background:var(--green); color:white; font-weight:800; font-size:1.25rem; text-decoration:none; padding:16px 30px; border-radius:18px; border:3px solid var(--ink); box-shadow:var(--shadow); font-family:"Fredoka", "Nunito", sans-serif; transition:transform .08s; }
+  .btn:hover { transform:translateY(-2px); }
+  .btn:active { transform:translateY(4px); box-shadow:0 2px 0 rgba(30,42,58,.3); }
+  .btn.purple { background:var(--purple); }
+  .btn.blue { background:var(--blue); }
+  .btn.ghost { background:var(--cream); color:var(--ink); }
+  .btn svg { width:26px; height:26px; }
+  .fine { margin-top:22px; color:var(--navy); font-size:.95rem; }
+  .float { position:absolute; pointer-events:none; animation: bob 5s ease-in-out infinite; }
+  .float img { display:block; height:auto; filter: drop-shadow(0 6px 0 rgba(30,42,58,.15)); }
+  @keyframes bob { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-14px) } }
+  @media (prefers-reduced-motion: reduce) { .float { animation:none; } }
+  @media (max-width:720px) { .float.side { display:none; } }
+
+  /* cards */
+  .grid { display:grid; gap:18px; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { background:var(--cream); border:3px solid var(--ink); border-radius:var(--radius); padding:22px 24px; box-shadow:var(--shadow); }
+  .card.tint-y { background:#FFF1C6; } .card.tint-g { background:#E3F4DE; } .card.tint-b { background:#E1EEFF; } .card.tint-p { background:#EFE4FF; } .card.tint-r { background:#FFE3E5; } .card.tint-o { background:#FFE9D3; }
+  .card .ic { height:64px; display:flex; align-items:flex-end; margin-bottom:12px; }
+  .card .ic img { max-height:64px; width:auto; }
+  .steps { counter-reset:step; list-style:none; padding:0; margin:0; display:grid; gap:14px; }
+  .steps li { position:relative; padding-left:58px; min-height:44px; }
+  .steps li::before { counter-increment:step; content:counter(step); position:absolute; left:0; top:0; width:42px; height:42px; border-radius:50%; background:var(--yellow); border:3px solid var(--ink); display:flex; align-items:center; justify-content:center; font-family:"Fredoka", sans-serif; font-weight:700; font-size:1.2rem; box-shadow:0 3px 0 rgba(30,42,58,.25); }
+  kbd { background:white; border:2px solid var(--ink); border-bottom-width:4px; border-radius:8px; padding:1px 8px; font-family:inherit; font-weight:800; font-size:.92em; }
+
+  /* scene + screenshots */
+  .scene { background:var(--navy); border:3px solid var(--ink); border-radius:26px; padding:14px; box-shadow:var(--shadow); }
+  .scene img { display:block; width:100%; height:auto; border-radius:14px; }
+  .scene figcaption { color:var(--yellow); text-align:center; padding:12px 6px 2px; font-weight:800; }
+  .shots { display:grid; gap:18px; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); }
+  .shots figure { margin:0; background:var(--ink); border-radius:18px; padding:8px; box-shadow:var(--shadow); }
+  .shots img { display:block; width:100%; height:auto; border-radius:12px; }
+  .shots figcaption { color:white; text-align:center; padding:8px 4px 2px; font-size:.95rem; }
+  details { background:var(--cream); border:3px solid var(--ink); border-radius:var(--radius); padding:14px 20px; box-shadow:var(--shadow); }
+  summary { cursor:pointer; font-family:"Fredoka", sans-serif; font-size:1.2rem; font-weight:700; color:var(--navy); }
+  details img { width:100%; height:auto; border-radius:14px; border:3px solid var(--ink); margin-top:14px; }
+  footer { text-align:center; color:var(--navy); padding:36px 20px 44px; font-size:.95rem; }
+  footer a { color:var(--navy); }
 </style>
 </head>
 <body>
-<header>
-  <h1><span class="a">The</span><span class="b">Incredible</span><span class="c">Machine</span></h1>
-  <div class="tag">A tablet remake of the classic contraption puzzle game, built for small hands.</div>
-</header>
-<main>
-  <div class="card" style="text-align:center">
-    <p><a class="btn" href="play/">Play in your browser</a></p>
-    <p class="small">Works on iPad, iPhone, Android and computers. Nothing to install: it runs right here, and it keeps working offline once loaded. Progress is saved in the browser.</p>
-    <p style="margin-top:22px"><a class="btn alt" href="app-release.apk" download>Or download the Android APK</a></p>
-    <p class="small">Android 7.0 or newer. The whole game is about 100 KB: no ads, no internet, no accounts.</p>
-  </div>
 
-  <div class="card">
-    <h2>Put it on the home screen (iPad, iPhone, Android, computer)</h2>
-    <p>The browser version is a <em>web app</em>: add it to the home screen and it opens full-screen with its own icon, just like an app from the store, and it works without a connection. This is the way to play on an iPad or iPhone, where nothing can be sideloaded.</p>
-    <ol>
-      <li><strong>iPad or iPhone:</strong> open <a href="play/">the game</a> in <strong>Safari</strong> (it must be Safari, not Chrome). Tap the <strong>Share</strong> button (the square with an arrow), scroll down and tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>. Launch it from the new icon.</li>
-      <li><strong>Android tablet or phone:</strong> open <a href="play/">the game</a> in <strong>Chrome</strong>. Tap the <strong>⋮</strong> menu and choose <strong>Install app</strong> (older versions say <em>Add to Home screen</em>). Chrome may also offer an <em>Install</em> banner on its own.</li>
-      <li><strong>Windows, Mac or Chromebook:</strong> open <a href="play/">the game</a> in Chrome or Edge and click the small <strong>install</strong> icon at the right end of the address bar (or <strong>⋮ → Cast, save and share → Install page as app</strong>).</li>
-    </ol>
-    <p class="small">The home-screen copy updates itself the next time it is opened with a connection. The web version and the APK keep separate progress.</p>
-  </div>
-
-  <div class="card">
-    <h2>How to install the APK on an Android tablet</h2>
-    <ol>
-      <li>On the tablet, open this page in Chrome and tap <strong>Download the APK</strong>.</li>
-      <li>When the download finishes, tap the notification (or open the <em>Files</em> app and tap <code>app-release.apk</code>).</li>
-      <li>Android will say it needs permission to install apps from this source. Tap <strong>Settings</strong>, switch on <strong>Allow from this source</strong>, then go back.</li>
-      <li>Tap <strong>Install</strong>. If Play Protect asks, choose <strong>Install anyway</strong>: the app is not on the store because it is a hobby project, not because it does anything unusual.</li>
-      <li>Find <strong>Incredible Machine</strong> in the app drawer and play! Updates install over the old version and keep your progress.</li>
-    </ol>
-    <p class="small">You can switch the "allow from this source" permission off again afterwards. The APK is built and signed by the GitHub Actions workflow in the repository, so what you download is exactly what the source code produces.</p>
-  </div>
-
-  <div class="card">
-    <h2>How to play</h2>
-    <ol>
-      <li>Pick a puzzle. The goal is written at the top in one sentence, for example <em>Get the ball into the bucket</em>.</li>
-      <li>Drag parts from the tray on the right onto the playfield. Parts snap into place; a green frame means the spot is free, a red frame means it is taken.</li>
-      <li>Tap a placed part to flip it, turn it, or throw it back in the tray.</li>
-      <li>To tie a rope (or a belt or a wire), tap the rope in the tray, then tap the two things to join. For a rope you can tap pulleys in between. Tap a rope to cut it again.</li>
-      <li>Press the big green <strong>Play</strong> button and watch. Press the red <strong>Stop</strong> button to try something else.</li>
-      <li>Stuck? The light-bulb button shows where the parts should go for a few seconds.</li>
-      <li><strong>Free play</strong> gives you every part with no goal at all; the tabs at the top of the tray sort them into balls, building blocks, machines, animals, power, goals and ropes.</li>
-    </ol>
-  </div>
-
-  <div class="card">
-    <h2>Screenshots</h2>
-    <div class="shots">
-      <img src="screenshots/title.png" alt="Title screen">
-      <img src="screenshots/levels.png" alt="Puzzle picker">
-      <img src="screenshots/play.png" alt="Building a machine">
-      <img src="screenshots/won.png" alt="Puzzle solved">
-      <img src="screenshots/freeplay.png" alt="Free play with category tabs">
+<header class="hero">
+  <div class="float side" style="left:4%; top:14%; animation-delay:-1s"><img src="art/parts/balloon.svg" width="88" alt=""></div>
+  <div class="float side" style="right:6%; top:10%; animation-delay:-2.5s"><img src="art/parts/basketball.svg" width="84" alt=""></div>
+  <div class="float side" style="left:7%; bottom:16%; animation-delay:-3s"><img src="art/parts/mouse.svg" width="96" alt=""></div>
+  <div class="float side" style="right:4%; bottom:26%; animation-delay:-.5s"><img src="art/parts/cat.svg" width="150" alt=""></div>
+  <div class="float side" style="left:18%; top:58%; animation-delay:-4s"><img src="art/parts/star.svg" width="64" alt=""></div>
+  <div class="float side" style="right:20%; top:52%; animation-delay:-1.8s"><img src="art/parts/rocket.svg" width="56" alt=""></div>
+  <div class="wrap">
+    <h1><img class="logo" src="art/logo.svg" alt="The Incredible Machine"></h1>
+    <p class="tag">Build crazy contraptions out of ramps, seesaws, cannons, balloons, a cat and a mouse. A friendly remake of the 1993 classic, made for small hands.</p>
+    <div class="cta">
+      <a class="btn" href="play/"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"><path d="M14 8l24 16-24 16z" fill="currentColor"/></svg>Play now</a>
+      <a class="btn purple" href="play/#install"><svg viewBox="0 0 48 48" fill="currentColor"><path d="M20 4h8v18h9L24 36 11 22h9z"/><path d="M6 32h7v6h22v-6h7v12H6z"/></svg>Install the app</a>
+      <a class="btn blue" href="app-release.apk" download><svg viewBox="0 0 48 48" fill="currentColor"><path d="M10 18a14 14 0 0128 0v2H10zM10 22h28v14a3 3 0 01-3 3H13a3 3 0 01-3-3z"/><circle cx="18" cy="14" r="2" fill="#fff"/><circle cx="30" cy="14" r="2" fill="#fff"/></svg>Android APK</a>
     </div>
-    <p class="small" style="margin-top:14px">Every puzzle with its solution in place, built by the automated playtest that runs on each push:</p>
-    <img src="screenshots/all-levels-solved.png" alt="All 44 puzzles solved" style="width:100%;border-radius:14px;border:3px solid var(--ink)">
+    <p class="fine">Free and open source · no ads, no accounts, no internet needed once loaded · the whole game is about 230 KB.</p>
   </div>
+</header>
 
-  <div class="card">
-    <h2>About</h2>
-    <p>This is an open-source fan remake of Sierra/Dynamix's 1993 puzzle game. The parts, physics and puzzles follow the original's rules (balls, ramps, seesaws, trampolines, conveyors, fans, balloons, candles, cannons, rockets, dynamite, Mort the mouse and Pokey the cat) with new vector art, big touch targets and a one-sentence goal per puzzle so that a six-year-old can play without reading much.</p>
-    <p><a class="btn alt" href="https://github.com/gangeli/the-incredible-machine">Source code on GitHub</a></p>
-  </div>
+<main>
+  <section id="install">
+    <div class="wrap">
+      <h2>Three ways to play</h2>
+      <p>The browser version is a <em>web app</em>: put it on the home screen and it opens full screen with its own icon, works offline and keeps your progress, exactly like a store app. That is how to play on an iPad or iPhone, where nothing else can be installed.</p>
+      <div class="grid" style="margin-top:20px">
+        <div class="card tint-b">
+          <div class="ic"><img src="art/parts/balloon.svg" alt=""></div>
+          <h3>iPad &amp; iPhone</h3>
+          <ol class="steps">
+            <li>Open <a href="play/">the game</a> in <strong>Safari</strong> (not Chrome).</li>
+            <li>Tap <kbd>Share</kbd>, the square with an arrow.</li>
+            <li>Scroll down, tap <kbd>Add to Home Screen</kbd>, then <kbd>Add</kbd>.</li>
+          </ol>
+        </div>
+        <div class="card tint-g">
+          <div class="ic"><img src="art/parts/cannon.svg" alt=""></div>
+          <h3>Android tablet &amp; phone</h3>
+          <ol class="steps">
+            <li>Open <a href="play/">the game</a> in <strong>Chrome</strong>.</li>
+            <li>Tap the purple <kbd>Install</kbd> button on the title screen, or the browser's <kbd>⋮</kbd> menu → <kbd>Install app</kbd>.</li>
+            <li>Prefer a real APK? <a href="app-release.apk" download>Download it</a> and see <a href="#apk">the sideloading steps</a>.</li>
+          </ol>
+        </div>
+        <div class="card tint-y">
+          <div class="ic"><img src="art/parts/rocket.svg" alt=""></div>
+          <h3>Computer</h3>
+          <ol class="steps">
+            <li>Open <a href="play/">the game</a> in Chrome or Edge (Firefox and Safari play it in a tab).</li>
+            <li>Click <kbd>Install</kbd> on the title screen, or the small install icon at the right end of the address bar.</li>
+            <li>It shows up in your apps and launcher like any other program.</li>
+          </ol>
+        </div>
+      </div>
+      <p class="fine" style="text-align:center">The home-screen copy updates itself the next time it opens with a connection. The web version and the APK keep separate progress.</p>
+    </div>
+  </section>
+
+  <section id="what">
+    <div class="wrap">
+      <h2>What's inside</h2>
+      <div class="grid">
+        <div class="card tint-y"><div class="ic"><img src="art/parts/star.svg" alt=""></div><h3>44 puzzles</h3><p>From "put the ramp under the ball" to chain reactions with switches, wires, motors, belts, buckets and pulleys. Every goal fits in one sentence.</p></div>
+        <div class="card tint-o"><div class="ic"><img src="art/parts/seesaw.svg" alt=""></div><h3>Free play</h3><p>Every part, no goal, category tabs in the tray. Build the machine you want and press Play.</p></div>
+        <div class="card tint-p"><div class="ic"><img src="art/parts/pulley.svg" alt=""></div><h3>Ropes, belts &amp; wires</h3><p>Tap the tool, then the two things to join. Ropes run over pulleys, candles burn them, scissors cut them.</p></div>
+        <div class="card tint-r"><div class="ic"><img src="art/parts/cat.svg" alt=""></div><h3>Mort &amp; Pokey</h3><p>A mouse who scurries after cheese and a cat who pounces when he sees him. Cage the cat, feed the mouse.</p></div>
+        <div class="card tint-g"><div class="ic"><img src="art/parts/basketball.svg" alt=""></div><h3>Made for small hands</h3><p>Big parts that snap into place, forgiving drops, a giant Play button, a hint bulb, and a nudge on the first puzzles.</p></div>
+        <div class="card tint-b"><div class="ic"><img src="art/parts/candle.svg" alt=""></div><h3>Tiny and private</h3><p>All art is vector, all sounds are synthesised. About 230 KB in the browser, 110 KB as an APK. Nothing leaves the device.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="see">
+    <div class="wrap">
+      <h2>See it run</h2>
+      <figure class="scene" style="margin:0 0 24px">
+        <img src="art/hero.svg" alt="Rube's big machine mid-flight: a ball drops off a belt into a bucket that lifts a cage">
+        <figcaption>"Rube's big machine": the baseball flips the switch, the switch powers the motor, the belt drops the bowling ball into the bucket, the bucket lifts the cage, and Mort runs for the cheese.</figcaption>
+      </figure>
+      <div class="shots">
+        <figure><img src="screenshots/title.png" alt="Title screen"><figcaption>Title screen, with a machine running behind it</figcaption></figure>
+        <figure><img src="screenshots/levels.png" alt="Puzzle picker"><figcaption>Pick a puzzle</figcaption></figure>
+        <figure><img src="screenshots/play.png" alt="Building a machine"><figcaption>Building: parts snap into place</figcaption></figure>
+        <figure><img src="screenshots/won.png" alt="Puzzle solved"><figcaption>Solved!</figcaption></figure>
+        <figure><img src="screenshots/freeplay.png" alt="Free play with category tabs"><figcaption>Free play, sorted into tabs</figcaption></figure>
+      </div>
+      <details style="margin-top:22px">
+        <summary>Every puzzle with its solution in place (built by the automated playtest on each push)</summary>
+        <img src="screenshots/all-levels-solved.png" alt="All 44 puzzles solved">
+      </details>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <h2>How to play</h2>
+      <div class="card">
+        <ol class="steps">
+          <li>Pick a puzzle. The goal is written at the top in one sentence, for example <em>Get the ball into the bucket</em>.</li>
+          <li>Drag parts from the tray on the right onto the playfield. Parts snap into place; a green frame means the spot is free, a red frame means it is taken.</li>
+          <li>Tap a placed part to flip it, turn it, or throw it back in the tray.</li>
+          <li>To tie a rope (or a belt or a wire), tap the rope in the tray, then tap the two things to join. For a rope you can tap pulleys in between. Tap a rope to cut it again.</li>
+          <li>Press the big green <strong>Play</strong> button and watch. Press the red <strong>Stop</strong> button to try something else.</li>
+          <li>Stuck? The light-bulb button shows where the parts should go for a few seconds.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <section id="apk">
+    <div class="wrap">
+      <h2>Installing the Android APK</h2>
+      <div class="card">
+        <p>The APK is the same game as a native Android app. It is not on the Play Store because this is a hobby project, so Android asks for permission once.</p>
+        <ol class="steps">
+          <li>On the tablet, open this page in Chrome and tap <a href="app-release.apk" download><strong>Android APK</strong></a>.</li>
+          <li>When the download finishes, tap the notification (or open the <em>Files</em> app and tap <code>app-release.apk</code>).</li>
+          <li>Android says it needs permission to install apps from this source. Tap <kbd>Settings</kbd>, switch on <kbd>Allow from this source</kbd>, then go back.</li>
+          <li>Tap <kbd>Install</kbd>. If Play Protect asks, choose <kbd>Install anyway</kbd>.</li>
+          <li>Find <strong>Incredible Machine</strong> in the app drawer and play. Updates install over the old version and keep your progress.</li>
+        </ol>
+        <p class="fine">You can switch the permission off again afterwards. The APK is built and signed by the GitHub Actions workflow in the repository, so what you download is exactly what the source code produces.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="wrap">
+      <h2>About</h2>
+      <div class="card">
+        <p>An open-source fan remake of Sierra/Dynamix's 1993 puzzle game. The parts, physics and puzzles follow the original's rules (balls, ramps, seesaws, trampolines, conveyors, fans, balloons, candles, cannons, rockets, dynamite, Mort the mouse and Pokey the cat) with new vector art, big touch targets and a one-sentence goal per puzzle, so that a six-year-old can play without reading much.</p>
+        <p>One Kotlin code base runs everywhere: the physics, parts and screens compile for Android and for the browser, and the pictures on this page are exported from the game's own renderer.</p>
+        <p style="margin-top:16px"><a class="btn ghost" href="https://github.com/gangeli/the-incredible-machine">Source code on GitHub</a></p>
+      </div>
+    </div>
+  </section>
 </main>
-<footer>MIT licensed. Not affiliated with Sierra or Dynamix.</footer>
+<footer>MIT licensed · Not affiliated with Sierra or Dynamix · <a href="play/">Play</a> · <a href="app-release.apk" download>APK</a> · <a href="https://github.com/gangeli/the-incredible-machine">GitHub</a></footer>
 </body>
 </html>

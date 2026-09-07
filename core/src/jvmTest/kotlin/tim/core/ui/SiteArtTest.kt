@@ -36,14 +36,10 @@ class SiteArtTest {
     /** Wordmark with a few parts around it, transparent background. */
     @Test
     fun `logo svg`() {
-        val p = SvgPainter(900.0, 340.0)
-        logo(p, 450.0, 150.0, 1.9)
-        part(p, PartType.BALLOON, 60.0, 30.0, 1.6)
-        part(p, PartType.BASKETBALL, 800.0, 40.0, 1.5)
-        part(p, PartType.MOUSE, 90.0, 260.0, 2.0)
-        part(p, PartType.CAT, 720.0, 240.0, 1.8, flipped = true)
-        p.save(); p.translate(200.0, 280.0); p.scale(0.9, 0.9); Icons.star(p, 0.0, 0.0, 48.0); p.restore()
-        p.save(); p.translate(640.0, 60.0); p.scale(0.6, 0.6); Icons.star(p, 0.0, 0.0, 48.0); p.restore()
+        val p = SvgPainter(900.0, 330.0)
+        logo(p, 450.0, 160.0, 1.6)
+        p.save(); p.translate(185.0, 72.0); p.scale(0.75, 0.75); Icons.star(p, 0.0, 0.0, 48.0); p.restore()
+        p.save(); p.translate(715.0, 104.0); p.scale(0.5, 0.5); Icons.star(p, 0.0, 0.0, 48.0); p.restore()
         p.save(File(out, "logo.svg"))
     }
 
@@ -83,12 +79,16 @@ class SiteArtTest {
     fun `open graph png`() {
         val p = Java2DPainter.create(1200, 630)
         p.gradientRect(0.0, 0.0, 1200.0, 630.0, Colors.rgb(0x8EC5FC), Colors.rgb(0xE0C3FC), true)
-        val lvl = Levels.all.first { it.id == "l34" }
-        val m = Machine(lvl.solvedBoard(), gravity = lvl.gravity, airPressure = lvl.airPressure)
-        while (m.time < 1.9) m.step()
-        p.save(); p.translate(120.0, 120.0); p.scale(1.5, 1.5); p.alpha = 0.55; m.draw(p, m.time); p.restore()
-        logo(p, 600.0, 250.0, 2.6)
-        p.textCentered("Build crazy contraptions. Play in your browser or on a tablet.", 600.0, 560.0, 34.0, Style.NAVY)
+        for (i in 0 until 13) part(p, PartType.BRICK_WALL, i * 96.0, 606.0, 1.0)
+        part(p, PartType.BALLOON, 70.0, 60.0, 2.2)
+        part(p, PartType.BASKETBALL, 1040.0, 70.0, 2.2)
+        part(p, PartType.MOUSE, 60.0, 560.0, 2.6)
+        part(p, PartType.CAT, 1010.0, 520.0, 2.6, flipped = true)
+        part(p, PartType.ROCKET, 960.0, 330.0, 1.6)
+        part(p, PartType.SEESAW, 150.0, 560.0, 1.4)
+        p.save(); p.translate(200.0, 330.0); p.scale(1.1, 1.1); Icons.star(p, 0.0, 0.0, 48.0); p.restore()
+        logo(p, 600.0, 250.0, 2.1)
+        p.textCentered("Build crazy contraptions. Play in your browser or on a tablet.", 600.0, 500.0, 30.0, Style.NAVY)
         Snap.save(p, "site/og")
     }
 }
