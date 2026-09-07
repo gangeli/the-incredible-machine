@@ -135,6 +135,33 @@ class PartsBehaviourTest {
     }
 
     @Test
+    fun `a rising rocket squeezes bellows from below and knocks scissors shut`() {
+        val m = machine {
+            floor(this)
+            part(PartType.BELLOWS, 300.0, 200.0)      // 7: nozzle points right
+            part(PartType.BALLOON, 420.0, 200.0)      // 8: in the puff zone
+            part(PartType.ROCKET, 316.0, 320.0)       // 9: right under the bellows
+            part(PartType.CANDLE, 300.0, 352.0)       // 10: lights it
+            part(PartType.WOOD_WALL, 400.0, 168.0)    // 11: keeps the balloon at puff height
+        }
+        val balloon = m.part<Balloon>(8)
+        val x0 = balloon.pos.x
+        m.runUntil(4.0) { balloon.pos.x - x0 > 40.0 }
+        assertTrue(balloon.pos.x - x0 > 40.0, "the puff should push the balloon right, moved ${balloon.pos.x - x0}")
+        val s = machine {
+            floor(this)
+            val top = part(PartType.HOOK, 300.0, 0.0)           // 7
+            val bottom = part(PartType.HOOK, 300.0, 200.0)      // 8: a taut rope between two hooks
+            rope(top, bottom)
+            part(PartType.SCISSORS, 276.0, 96.0)                // 9: the rope runs between its blades
+            part(PartType.ROCKET, 268.0, 320.0)                 // 10: rises into the handle from below
+            part(PartType.CANDLE, 252.0, 352.0)                 // 11
+        }
+        val cut = s.runUntil(5.0) { it.ropes.all { r -> r.cut } }
+        assertTrue(cut, "the rocket should knock the scissors shut and cut the rope")
+    }
+
+    @Test
     fun `an upside-down ramp slides a rising balloon sideways`() {
         // rotation 2: the solid corner is top-right, the slope runs from top-left down to bottom-right
         val m = machine { part(PartType.INCLINE, 200.0, 100.0, rotation = 2); part(PartType.BALLOON, 240.0, 300.0) }

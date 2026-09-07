@@ -868,7 +868,10 @@ class Scissors(placement: Placement, index: Int) : Part(placement, index), Sharp
     }
     override fun isSharpAt(point: Vec2) = bladeZone().expanded(4.0).contains(point)
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
-        if (self === handle && other.isDynamic && ev.normalFrom(self).y < -0.3) trigger()
+        if (self !== handle || !other.isDynamic) return
+        val n = ev.normalFrom(self)
+        // something landing on the handle closes them; a hard knock from below (a rocket) does too
+        if (n.y < -0.3 || (n.y > 0.3 && ev.relativeSpeed > 80)) trigger()
     }
     override fun trigger() {
         if (snapped) return
@@ -916,7 +919,8 @@ class Bellows(placement: Placement, index: Int) : Part(placement, index) {
         bodies.add(world.add(top))
     }
     override fun onContact(self: Body, other: Body, ev: ContactEvent) {
-        if (self === top && other.isDynamic && ev.normalFrom(self).y < -0.5 && ev.relativeSpeed > 30) trigger()
+        // squeezed by something landing on the handle or bumping it from below (a rising rocket, say), like the original
+        if (self === top && other.isDynamic && abs(ev.normalFrom(self).y) > 0.5 && ev.relativeSpeed > 30) trigger()
     }
     override fun trigger() {
         if (cooldown > 0) return
